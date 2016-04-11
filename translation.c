@@ -74,6 +74,7 @@ tr_unary_expression(
 ) {
   switch(expr->type) {
     case ast_MINUS: printf("-"); break;
+    case ast_PLUS: printf("+"); break;
     default: UNEXPECTED_NODE(expr) has_translation_errors = 1;
   }
   tr_expression(out, expr->child);

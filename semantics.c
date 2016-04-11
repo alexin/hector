@@ -6,44 +6,18 @@
 
 #include "hectorc.h"
 
-static
-int
-check_expression(
-  struct ast_node *expr
-);
-
-static
-int
-check_binary_expression(
-  struct ast_node *expr
-);
-
-static
-int
-check_unary_expression(
-  struct ast_node *expr
-);
-
-static
-int
-check_intlit(
-  struct ast_node *intlit
-);
-
-static
-int
-check_floatlit(
-  struct ast_node *floatlit
-);
+static int check_expression(struct ast_node *expr);
+static int check_binary_expression(struct ast_node *expr);
+static int check_unary_expression(struct ast_node *expr);
+static int check_intlit(struct ast_node *intlit);
+static int check_floatlit(struct ast_node *floatlit);
 
 /*----------------------------------------------------------------------------*/
 
-int
-check_expression(
-  struct ast_node *expr
-) {
+int check_expression(struct ast_node *expr) {
   switch(expr->type) {
     case ast_MINUS: return check_unary_expression(expr);
+    case ast_PLUS: return check_unary_expression(expr);
 
     case ast_ADD: return check_binary_expression(expr);
     case ast_SUB: return check_binary_expression(expr);
@@ -60,19 +34,13 @@ check_expression(
   }
 }
 
-int
-check_unary_expression(
-  struct ast_node *expr
-) {
+int check_unary_expression(struct ast_node *expr) {
   struct ast_node *rhs;
   rhs = expr->child;
   return check_expression(rhs);
 }
 
-int
-check_binary_expression(
-  struct ast_node *expr
-) {
+int check_binary_expression(struct ast_node *expr) {
   struct ast_node *lhs, *rhs;
   lhs = expr->child;
   if(lhs == NULL) return 0;
@@ -80,10 +48,9 @@ check_binary_expression(
   return check_expression(lhs) && check_expression(rhs);
 }
 
-int
-check_intlit(
-  struct ast_node *intlit
-) {
+/*----------------------------------------------------------------------------*/
+
+int check_intlit(struct ast_node *intlit) {
   int ivalue;
   char *svalue;
   svalue = (char*) intlit->value;
@@ -98,10 +65,7 @@ check_intlit(
   return 1;
 }
 
-int
-check_floatlit(
-  struct ast_node *floatlit
-) {
+int check_floatlit(struct ast_node *floatlit) {
   float fvalue;
   char *svalue;
   svalue = (char*) floatlit->value;
@@ -114,10 +78,7 @@ check_floatlit(
 
 /*----------------------------------------------------------------------------*/
 
-int
-check_program(
-  struct ast_node *program
-) {
+int check_program(struct ast_node *program) {
   if(program->type != ast_PROGRAM) {
     printf("Unknown AST node type: %s\n", get_ast_type_str(program->type));
     return 0;

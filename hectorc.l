@@ -29,6 +29,9 @@ static void on_floatlit();
 
 %}
 
+  /* Whitespace character. */
+ws                        [ \t\n\r\f]
+
  /* Decimal integer. May start with zeros. */
 intlit                    [0-9]+
 

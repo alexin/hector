@@ -12,7 +12,7 @@
 
 static const char *ast_type_str[] = {
   "PROGRAM",
-  "MINUS",
+  "MINUS", "PLUS"
   "ADD", "SUB", "MUL", "DIV", "POW",
   "INTLIT", "FLOATLIT"
 };
@@ -63,7 +63,7 @@ int
 is_ast_type_unary(
   const enum ast_type type
 ) {
-  return type == ast_MINUS;
+  return type == ast_MINUS || type == ast_PLUS;
 }
 
 static
@@ -114,6 +114,7 @@ ast_print(
     case ast_DIV: tab_printf(depth, "Div\n"); break;
     case ast_POW: tab_printf(depth, "Pow\n"); break;
     case ast_MINUS: tab_printf(depth, "Minus\n"); break;
+    case ast_PLUS: tab_printf(depth, "Plus\n"); break;
     case ast_INTLIT:
       tab_printf(depth, "IntLit(%s)\n", ((char*)node->value));
       break;
@@ -228,16 +229,11 @@ ast_create_unary(
   struct ast_node *expr
 ) {
   struct ast_node *node;
-
   if(!is_ast_type_unary(type)) return NULL;
-
   if(expr == NULL) return NULL;
-
   node = ast_create_node(type);
   if(node == NULL) return NULL;
-
   node->child = expr;
-
   return node;
 }
 

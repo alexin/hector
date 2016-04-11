@@ -108,6 +108,13 @@ Expression
         ast_free($2);
       }
     }
+  | PLUS Expression %prec NEG
+    {
+      $$ = ast_create_unary(ast_PLUS, $2);
+      if($$ == NULL) {
+        ast_free($2);
+      }
+    }
   | Expression POW Expression
     {
       $$ = ast_create_binary(ast_POW, $1, $3);

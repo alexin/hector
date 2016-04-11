@@ -5,7 +5,7 @@
 
 enum ast_type {
   ast_PROGRAM,
-  ast_MINUS,
+  ast_MINUS, ast_PLUS,
   ast_ADD, ast_SUB, ast_MUL, ast_DIV, ast_POW,
   ast_INTLIT, ast_FLOATLIT
 };
