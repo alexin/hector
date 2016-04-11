@@ -42,8 +42,8 @@ void tr_expression(FILE *out, struct ast_node *expr) {
 
 void tr_unary_expression(FILE *out, struct ast_node *expr) {
   switch(expr->type) {
-    case ast_MINUS: printf("-"); break;
-    case ast_PLUS: printf("+"); break;
+    case ast_MINUS: fprintf(out, "-"); break;
+    case ast_PLUS: fprintf(out, "+"); break;
     default: UNEXPECTED_NODE(expr) has_translation_errors = 1;
   }
   tr_expression(out, expr->child);
@@ -56,18 +56,18 @@ void tr_binary_expression(FILE *out, struct ast_node *expr) {
   rhs = expr->child->sibling;
 
   if(expr->type == ast_POW) {
-    printf("pow(");
+    fprintf(out, "pow(");
     tr_expression(out, lhs);
-    printf(",");
+    fprintf(out, ",");
     tr_expression(out, rhs);
-    printf(")");
+    fprintf(out, ")");
   } else {
     tr_expression(out, lhs);
     switch(expr->type) {
-      case ast_ADD: printf(" + "); break;
-      case ast_SUB: printf(" - "); break;
-      case ast_MUL: printf(" * "); break;
-      case ast_DIV: printf(" / "); break;
+      case ast_ADD: fprintf(out, " + "); break;
+      case ast_SUB: fprintf(out, " - "); break;
+      case ast_MUL: fprintf(out, " * "); break;
+      case ast_DIV: fprintf(out, " / "); break;
       default: UNEXPECTED_NODE(expr) has_translation_errors = 1;
     }
     tr_expression(out, rhs);
@@ -77,41 +77,41 @@ void tr_binary_expression(FILE *out, struct ast_node *expr) {
 void tr_intlit(FILE *out, struct ast_node *intlit) {
   int value;
   parse_int(intlit->value, &value);
-  printf("%d", value);
+  fprintf(out, "%d", value);
 }
 
 void tr_floatlit(FILE *out, struct ast_node *floatlit) {
   float value;
   parse_float(floatlit->value, &value);
-  printf("%f", value);
+  fprintf(out, "%f", value);
 }
 
 /*----------------------------------------------------------------------------*/
 
 void tr_vector(FILE *out, struct ast_node *vector) {
   struct ast_node *component;
-  printf("VECTOR(");
+  fprintf(out, "VECTOR(");
   component = vector->child;
   while(component != NULL) {
     tr_expression(out, component);
     component = component->sibling;
-    if(component != NULL) printf(",");
+    if(component != NULL) fprintf(out, ",");
   }
-  printf(")");
+  fprintf(out, ")");
 }
 
 /*----------------------------------------------------------------------------*/
 
 void tr_program(FILE *out, struct ast_node *program) {
-  printf("#include <stdio.h>\n");
-  printf("#include <stdlib.h>\n");
-  printf("#include <math.h>\n\n");
-  printf("int main(int argc, char **argv) {\n");
-  printf("  float expr;\n");
-  printf("  expr = ");
+  fprintf(out, "#include <stdio.h>\n");
+  fprintf(out, "#include <stdlib.h>\n");
+  fprintf(out, "#include <math.h>\n\n");
+  fprintf(out, "int main(int argc, char **argv) {\n");
+  fprintf(out, "  float expr;\n");
+  fprintf(out, "  expr = ");
   tr_expression(out, program->child);
-  printf(";\n");
-  printf("  printf(\"%%f\\n\", expr);\n");
-  printf("  return EXIT_SUCCESS;\n");
-  printf("}\n");
+  fprintf(out, ";\n");
+  fprintf(out, "  printf(\"%%f\\n\", expr);\n");
+  fprintf(out, "  return EXIT_SUCCESS;\n");
+  fprintf(out, "}\n");
 }
