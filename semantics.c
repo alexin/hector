@@ -118,13 +118,15 @@ int
 check_floatlit(
   struct ast_node *floatlit
 ) {
-  float value;
+  float fvalue;
+  char *svalue;
   if(floatlit == NULL) {
     printf("FloatLit is null!\n");
     return 0;
   }
-  if(!parse_float(floatlit->value, &value)) {
-    printf("Invalid float literal: %s\n", floatlit->value);
+  svalue = (char*) floatlit->value;
+  if(!parse_float(svalue, &fvalue)) {
+    printf("Invalid float literal: %s\n", svalue);
     return 0;
   }
   return 1;

@@ -33,7 +33,7 @@ static void on_floatlit();
 intlit                    [0-9]+
 
   /* Real number. */
-floatlit                  [+-]?[0-9]*\.?[0-9]+
+floatlit                  [0-9]*\.?[0-9]+
 
  /* Exclusive state to parse comments. This is necessary to "remember"
     the line and column the comment started. */
@@ -60,8 +60,8 @@ floatlit                  [+-]?[0-9]*\.?[0-9]+
 <COMMENT>"*/"             { IC; BEGIN INITIAL; }
 
  /* Matches an integer literal and optionally prints it. */
-{intlit}                  { IC; on_intlit(); return INTLIT; }
-{floatlit}                 { IC; on_floatlit(); return FLOATLIT; }
+{intlit}                  { IC; on_intlit();          return INTLIT; }
+{floatlit}                { IC; on_floatlit();        return FLOATLIT; }
 
 "-"                       { IC; tprintf("MINUS\n");   return MINUS; }
 "+"                       { IC; tprintf("PLUS\n");    return PLUS; }
