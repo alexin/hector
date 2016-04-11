@@ -93,6 +93,8 @@ hc_syntatic_analysis(const int debug) {
   hc_line = 1;
   hc_column = 0;
   yyparse();
+  if(!has_lexical_errors && !has_syntax_errors)
+    ast_print(program, 0);
   if(debug && has_lexical_errors)
     printf("There are lexical errors.\n");
   if(debug && has_syntax_errors)

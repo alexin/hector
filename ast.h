@@ -5,9 +5,17 @@
 
 enum ast_type {
   ast_PROGRAM,
+
+  /* Unary expressions. */
   ast_MINUS, ast_PLUS,
+
+  /* Binary expressions. */
   ast_ADD, ast_SUB, ast_MUL, ast_DIV, ast_POW,
-  ast_INTLIT, ast_FLOATLIT
+
+  /* Literals. */
+  ast_INTLIT, ast_FLOATLIT,
+
+  ast_VECTOR
 };
 
 struct ast_node {
@@ -76,6 +84,10 @@ ast_create_program(
 
 struct ast_node* ast_create_intlit(char *value);
 struct ast_node* ast_create_floatlit(char *value);
+
+/*----------------------------------------------------------------------------*/
+
+struct ast_node* ast_create_vector(struct ast_node *expr);
 
 /*----------------------------------------------------------------------------*/
 

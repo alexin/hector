@@ -26,6 +26,7 @@ void yyerror(char *message);
 
 %type <vnode> Program
 %type <vnode> Expression
+%type <vnode> ExpressionList
 
 /*%destructor { ast_free($$); $$ = NULL; } Program
 %destructor { ast_free($$); $$ = NULL; } Expression
@@ -39,6 +40,7 @@ void yyerror(char *message);
 %right NEG
 %right POW
 %left LPAR RPAR
+%left COMMA
 
 %start Program
 
@@ -127,6 +129,27 @@ Expression
     {
       $$ = $2;
     }
+  | LPAR Expression ExpressionList RPAR
+    {
+      $$ = ast_create_vector(ast_add_sibling($2, $3));
+      if($$ == NULL) {
+        ast_free($2);
+        ast_free($3);
+      }
+    }
+  ;
+
+ExpressionList
+  : COMMA Expression ExpressionList
+    {
+      $$ = ast_add_sibling($2, $3);
+      if($$ == NULL) {
+        ast_free($2);
+        ast_free($3);
+      }
+    }
+  | COMMA Expression
+    { $$ = $2; }
   ;
 
 

@@ -11,6 +11,7 @@ static int check_binary_expression(struct ast_node *expr);
 static int check_unary_expression(struct ast_node *expr);
 static int check_intlit(struct ast_node *intlit);
 static int check_floatlit(struct ast_node *floatlit);
+static int check_vector(struct ast_node *vector);
 
 /*----------------------------------------------------------------------------*/
 
@@ -27,6 +28,8 @@ int check_expression(struct ast_node *expr) {
 
     case ast_INTLIT: return check_intlit(expr);
     case ast_FLOATLIT: return check_floatlit(expr);
+
+    case ast_VECTOR: return check_vector(expr);
 
     default:
       printf("Unexpected AST node type: %s\n", get_ast_type_str(expr->type));
@@ -74,6 +77,24 @@ int check_floatlit(struct ast_node *floatlit) {
     return 0;
   }
   return 1;
+}
+
+/*----------------------------------------------------------------------------*/
+
+int check_vector(struct ast_node *vector) {
+  struct ast_node *component;
+  int has_errors;
+  if(ast_count_siblings(vector->child) < 2) {
+    printf("A vector must have 2 or more components");
+    return 0;
+  }
+  component = vector->child;
+  has_errors = 0;
+  while(component != NULL) {
+    if(!check_expression(component)) has_errors = 1;
+    component = component->sibling;
+  }
+  return !has_errors;
 }
 
 /*----------------------------------------------------------------------------*/

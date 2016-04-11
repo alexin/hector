@@ -14,7 +14,8 @@ static const char *ast_type_str[] = {
   "PROGRAM",
   "MINUS", "PLUS"
   "ADD", "SUB", "MUL", "DIV", "POW",
-  "INTLIT", "FLOATLIT"
+  "INTLIT", "FLOATLIT",
+  "VECTOR"
 };
 
 /*----------------------------------------------------------------------------*/
@@ -121,6 +122,7 @@ ast_print(
     case ast_FLOATLIT:
       tab_printf(depth, "FloatLit(%s)\n", ((char*)node->value));
       break;
+    case ast_VECTOR: tab_printf(depth, "Vector\n"); break;
     default:
       tab_printf(
         depth,
@@ -218,6 +220,18 @@ ast_create_floatlit(
   node = ast_create_node(ast_FLOATLIT);
   if(node == NULL) return NULL;
   node->value = (void*) value;
+  return node;
+}
+
+/*----------------------------------------------------------------------------*/
+
+struct ast_node*
+ast_create_vector(struct ast_node *expr) {
+  struct ast_node *node;
+  if(expr == NULL) return NULL;
+  node = ast_create_node(ast_VECTOR);
+  if(node == NULL) return NULL;
+  node->child = expr;
   return node;
 }
 

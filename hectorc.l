@@ -75,6 +75,8 @@ floatlit                  [0-9]*\.?[0-9]+
 "("                       { IC; tprintf("LPAR\n");    return LPAR; }
 ")"                       { IC; tprintf("RPAR\n");    return RPAR; }
 
+","                       { IC; tprintf("COMMA\n");   return COMMA; }
+
  /* Ingores spaces and tabs. */
 [ \t]                     { IC; }
 

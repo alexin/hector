@@ -9,69 +9,38 @@
 
 /*----------------------------------------------------------------------------*/
 
-static
-void
-tr_expression(
-  FILE *out, /* NON-NULL */
-  struct ast_node *expr /* NON-NULL */
-);
-
-static
-void
-tr_unary_expression(
-  FILE *out, /* NON-NULL */
-  struct ast_node *expr /* NON-NULL */
-);
-
-static
-void
-tr_binary_expression(
-  FILE *out, /* NON-NULL */
-  struct ast_node *expr /* NON-NULL */
-);
-
-static
-void
-tr_intlit(
-  FILE *out, /* NON-NULL */
-  struct ast_node *intlit /* NON-NULL */
-);
-
-static
-void
-tr_floatlit(
-  FILE *out, /* NON-NULL */
-  struct ast_node *floatlit /* NON-NULL */
-);
+static void tr_expression(FILE *out, struct ast_node *expr);
+static void tr_unary_expression(FILE *out, struct ast_node *expr);
+static void tr_binary_expression(FILE *out, struct ast_node *expr);
+static void tr_intlit(FILE *out, struct ast_node *intlit);
+static void tr_floatlit(FILE *out, struct ast_node *floatlit);
+static void tr_vector(FILE *out, struct ast_node *vector);
 
 /*----------------------------------------------------------------------------*/
 
-static
-void
-tr_expression(
-  FILE *out, /* NON-NULL */
-  struct ast_node *expr /* NON-NULL */
-) {
+void tr_expression(FILE *out, struct ast_node *expr) {
   if(ast_is_unary_expression(expr)) {
     tr_unary_expression(out, expr);
+
   } else if(ast_is_binary_expression(expr)) {
     tr_binary_expression(out, expr);
+
   } else if(expr->type == ast_INTLIT) {
     tr_intlit(out, expr);
+
   } else if(expr->type == ast_FLOATLIT) {
     tr_floatlit(out, expr);
+
+  } else if(expr->type == ast_VECTOR) {
+    tr_vector(out, expr);
+
   } else {
     UNEXPECTED_NODE(expr)
     has_translation_errors = 1;
   }
 }
 
-static
-void
-tr_unary_expression(
-  FILE *out, /* NON-NULL */
-  struct ast_node *expr /* NON-NULL */
-) {
+void tr_unary_expression(FILE *out, struct ast_node *expr) {
   switch(expr->type) {
     case ast_MINUS: printf("-"); break;
     case ast_PLUS: printf("+"); break;
@@ -80,12 +49,7 @@ tr_unary_expression(
   tr_expression(out, expr->child);
 }
 
-static
-void
-tr_binary_expression(
-  FILE *out, /* NON-NULL */
-  struct ast_node *expr /* NON-NULL */
-) {
+void tr_binary_expression(FILE *out, struct ast_node *expr) {
   struct ast_node *lhs, *rhs;
 
   lhs = expr->child;
@@ -110,23 +74,13 @@ tr_binary_expression(
   }
 }
 
-static
-void
-tr_intlit(
-  FILE *out, /* NON-NULL */
-  struct ast_node *intlit /* NON-NULL */
-) {
+void tr_intlit(FILE *out, struct ast_node *intlit) {
   int value;
   parse_int(intlit->value, &value);
   printf("%d", value);
 }
 
-static
-void
-tr_floatlit(
-  FILE *out, /* NON-NULL */
-  struct ast_node *floatlit /* NON-NULL */
-) {
+void tr_floatlit(FILE *out, struct ast_node *floatlit) {
   float value;
   parse_float(floatlit->value, &value);
   printf("%f", value);
@@ -134,11 +88,21 @@ tr_floatlit(
 
 /*----------------------------------------------------------------------------*/
 
-void
-tr_program(
-  FILE *out, /* NON-NULL */
-  struct ast_node *program /* NON-NULL */
-) {
+void tr_vector(FILE *out, struct ast_node *vector) {
+  struct ast_node *component;
+  printf("VECTOR(");
+  component = vector->child;
+  while(component != NULL) {
+    tr_expression(out, component);
+    component = component->sibling;
+    if(component != NULL) printf(",");
+  }
+  printf(")");
+}
+
+/*----------------------------------------------------------------------------*/
+
+void tr_program(FILE *out, struct ast_node *program) {
   printf("#include <stdio.h>\n");
   printf("#include <stdlib.h>\n");
   printf("#include <math.h>\n\n");
