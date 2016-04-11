@@ -42,10 +42,6 @@ int
 check_expression(
   struct ast_node *expr
 ) {
-  if(expr == NULL) {
-    printf("Expression is null!\n");
-    return 0;
-  }
   switch(expr->type) {
     case ast_MINUS: return check_unary_expression(expr);
 
@@ -69,10 +65,6 @@ check_unary_expression(
   struct ast_node *expr
 ) {
   struct ast_node *rhs;
-  if(expr == NULL) {
-    printf("Unary expression is null!\n");
-    return 0;
-  }
   rhs = expr->child;
   return check_expression(rhs);
 }
@@ -82,10 +74,6 @@ check_binary_expression(
   struct ast_node *expr
 ) {
   struct ast_node *lhs, *rhs;
-  if(expr == NULL) {
-    printf("Binary expression is null!\n");
-    return 0;
-  }
   lhs = expr->child;
   if(lhs == NULL) return 0;
   rhs = expr->child->sibling;
@@ -98,10 +86,6 @@ check_intlit(
 ) {
   int ivalue;
   char *svalue;
-  if(intlit == NULL) {
-    printf("IntLit is null!\n");
-    return 0;
-  }
   svalue = (char*) intlit->value;
   if(strlen(svalue) > 1 && svalue[0] == '0') {
     printf("Invalid integer literal: %s\n", svalue);
@@ -120,10 +104,6 @@ check_floatlit(
 ) {
   float fvalue;
   char *svalue;
-  if(floatlit == NULL) {
-    printf("FloatLit is null!\n");
-    return 0;
-  }
   svalue = (char*) floatlit->value;
   if(!parse_float(svalue, &fvalue)) {
     printf("Invalid float literal: %s\n", svalue);
@@ -138,10 +118,6 @@ int
 check_program(
   struct ast_node *program
 ) {
-  if(program == NULL) {
-    printf("Program is null!\n");
-    return 0;
-  }
   if(program->type != ast_PROGRAM) {
     printf("Unknown AST node type: %s\n", get_ast_type_str(program->type));
     return 0;
