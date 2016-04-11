@@ -37,6 +37,13 @@ tr_intlit(
   struct ast_node *intlit /* NON-NULL */
 );
 
+static
+void
+tr_floatlit(
+  FILE *out, /* NON-NULL */
+  struct ast_node *floatlit /* NON-NULL */
+);
+
 /*----------------------------------------------------------------------------*/
 
 static
@@ -51,6 +58,8 @@ tr_expression(
     tr_binary_expression(out, expr);
   } else if(expr->type == ast_INTLIT) {
     tr_intlit(out, expr);
+  } else if(expr->type == ast_FLOATLIT) {
+    tr_floatlit(out, expr);
   } else {
     UNEXPECTED_NODE(expr)
     has_translation_errors = 1;
@@ -111,6 +120,17 @@ tr_intlit(
   printf("%d", value);
 }
 
+static
+void
+tr_floatlit(
+  FILE *out, /* NON-NULL */
+  struct ast_node *floatlit /* NON-NULL */
+) {
+  float value;
+  parse_float(floatlit->value, &value);
+  printf("%f", value);
+}
+
 /*----------------------------------------------------------------------------*/
 
 void
@@ -122,11 +142,11 @@ tr_program(
   printf("#include <stdlib.h>\n");
   printf("#include <math.h>\n\n");
   printf("int main(int argc, char **argv) {\n");
-  printf("  int expr;\n");
+  printf("  float expr;\n");
   printf("  expr = ");
   tr_expression(out, program->child);
   printf(";\n");
-  printf("  printf(\"%%d\\n\", expr);\n");
+  printf("  printf(\"%%f\\n\", expr);\n");
   printf("  return EXIT_SUCCESS;\n");
   printf("}\n");
 }

@@ -25,11 +25,15 @@ static void ic(const char character);
 static void uc();
 
 static void on_intlit();
+static void on_floatlit();
 
 %}
 
  /* Decimal integer. May start with zeros. */
 intlit                    [0-9]+
+
+  /* Real number. */
+floatlit                  [+-]?[0-9]*\.?[0-9]+
 
  /* Exclusive state to parse comments. This is necessary to "remember"
     the line and column the comment started. */
@@ -57,6 +61,7 @@ intlit                    [0-9]+
 
  /* Matches an integer literal and optionally prints it. */
 {intlit}                  { IC; on_intlit(); return INTLIT; }
+{floatlit}                 { IC; on_floatlit(); return FLOATLIT; }
 
 "-"                       { IC; tprintf("MINUS\n");   return MINUS; }
 "+"                       { IC; tprintf("PLUS\n");    return PLUS; }
@@ -118,4 +123,9 @@ void ic(const char character) {
 void on_intlit() {
   tprintf("INTLIT(%s)\n", yytext);
   yylval.vint = strdup(yytext);
+}
+
+void on_floatlit() {
+  tprintf("FLOATLIT(%s)\n", yytext);
+  yylval.vfloat = strdup(yytext);
 }

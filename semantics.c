@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "hectorc.h"
 
@@ -29,6 +30,12 @@ check_intlit(
   struct ast_node *intlit
 );
 
+static
+int
+check_floatlit(
+  struct ast_node *floatlit
+);
+
 /*----------------------------------------------------------------------------*/
 
 int
@@ -49,6 +56,7 @@ check_expression(
     case ast_POW: return check_binary_expression(expr);
 
     case ast_INTLIT: return check_intlit(expr);
+    case ast_FLOATLIT: return check_floatlit(expr);
 
     default:
       printf("Unexpected AST node type: %s\n", get_ast_type_str(expr->type));
@@ -88,17 +96,35 @@ int
 check_intlit(
   struct ast_node *intlit
 ) {
-  int value;
+  int ivalue;
+  char *svalue;
   if(intlit == NULL) {
     printf("IntLit is null!\n");
     return 0;
   }
-  if(!is_decimal(intlit->value)) {
-    printf("Invalid integer literal: %s\n", intlit->value);
+  svalue = (char*) intlit->value;
+  if(strlen(svalue) > 1 && svalue[0] == '0') {
+    printf("Invalid integer literal: %s\n", svalue);
     return 0;
   }
-  if(!parse_int(intlit->value, &value)) {
-    printf("Invalid integer literal: %s\n", intlit->value);
+  if(!parse_int(svalue, &ivalue)) {
+    printf("Invalid integer literal: %s\n", svalue);
+    return 0;
+  }
+  return 1;
+}
+
+int
+check_floatlit(
+  struct ast_node *floatlit
+) {
+  float value;
+  if(floatlit == NULL) {
+    printf("FloatLit is null!\n");
+    return 0;
+  }
+  if(!parse_float(floatlit->value, &value)) {
+    printf("Invalid float literal: %s\n", floatlit->value);
     return 0;
   }
   return 1;

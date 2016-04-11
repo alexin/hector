@@ -7,7 +7,7 @@ enum ast_type {
   ast_PROGRAM,
   ast_MINUS,
   ast_ADD, ast_SUB, ast_MUL, ast_DIV, ast_POW,
-  ast_INTLIT
+  ast_INTLIT, ast_FLOATLIT
 };
 
 struct ast_node {
@@ -75,6 +75,7 @@ ast_create_program(
 /*----------------------------------------------------------------------------*/
 
 struct ast_node* ast_create_intlit(char *value);
+struct ast_node* ast_create_floatlit(char *value);
 
 /*----------------------------------------------------------------------------*/
 

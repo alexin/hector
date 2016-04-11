@@ -20,6 +20,7 @@ void yyerror(char *message);
 
 %union {
   char *vint;
+  char *vfloat;
   struct ast_node *vnode;
 }
 
@@ -31,6 +32,7 @@ void yyerror(char *message);
 %destructor { free($$); $$ = NULL; } INTLIT*/
 
 %token <vint> INTLIT
+%token <vfloat> FLOATLIT
 
 %left MINUS PLUS
 %left AST DIV
@@ -56,6 +58,13 @@ Expression
   : INTLIT
     {
       $$ = ast_create_intlit($1);
+      if($$ == NULL) {
+        free($1);
+      }
+    }
+  | FLOATLIT
+    {
+      $$ = ast_create_floatlit($1);
       if($$ == NULL) {
         free($1);
       }
@@ -123,6 +132,7 @@ int main(int argc, char **argv) {
 /*----------------------------------------------------------------------------*/
 
 void yyerror(char *message) {
+  has_syntax_errors = 1;
   printf(
     "Line %lu, column %lu: %s: %s\n",
     hc_line,

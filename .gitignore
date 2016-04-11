@@ -30,3 +30,18 @@
 
 # Debug files
 *.dSYM/
+
+# Program
+hectorc
+hectorc.zip
+
+# Lex
+lex.yy.c
+
+# Yacc
+hectorc.tab.c
+hectorc.tab.h
+hectorc.output
+
+# clang-analyzer
+static/

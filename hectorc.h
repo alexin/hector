@@ -35,14 +35,15 @@ tab_printf(
 );
 
 int
-is_decimal(
-  const char *str
-);
-
-int
 parse_int(
   const char *str,
   int *value
+);
+
+int
+parse_float(
+  const char *str,
+  float *value
 );
 
 #endif//H_HECTORC

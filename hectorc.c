@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <limits.h>
+#include <float.h>
+#include <math.h>
 
 #include "hectorc.tab.h"
 #include "ast.h"
@@ -46,27 +48,19 @@ int hc_init(int argc, char **argv) {
     hc_lexical_analysis(fd);
 
   } else if(ft) {
-    //hc_lexical_analysis(fd);
-    if(!has_lexical_errors) {
-      hc_syntatic_analysis(fd);
-    }
+    hc_syntatic_analysis(fd);
+
   } else if(fs) {
-    //hc_lexical_analysis(fd);
-    if(!has_lexical_errors) {
-      hc_syntatic_analysis(fd);
-      if(!has_syntax_errors) {
-        hc_semantic_analysis(fd);
-      }
+    hc_syntatic_analysis(fd);
+    if(!has_lexical_errors && !has_syntax_errors) {
+      hc_semantic_analysis(fd);
     }
   } else {
-    //hc_lexical_analysis(fd);
-    if(!has_lexical_errors) {
-      hc_syntatic_analysis(fd);
-      if(!has_syntax_errors) {
-        hc_semantic_analysis(fd);
-        if(!has_semantic_errors) {
-          hc_translation_phase(fd);
-        }
+    hc_syntatic_analysis(fd);
+    if(!has_lexical_errors && !has_syntax_errors) {
+      hc_semantic_analysis(fd);
+      if(!has_semantic_errors) {
+        hc_translation_phase(fd);
       }
     }
   }
@@ -99,6 +93,8 @@ hc_syntatic_analysis(const int debug) {
   hc_line = 1;
   hc_column = 0;
   yyparse();
+  if(debug && has_lexical_errors)
+    printf("There are lexical errors.\n");
   if(debug && has_syntax_errors)
     printf("There are syntatic errors.\n");
 }
@@ -148,17 +144,6 @@ tab_printf(
 
 /*----------------------------------------------------------------------------*/
 
-int
-is_decimal(
-  const char *str
-) {
-  size_t len;
-  if(str == NULL) return 0;
-  len = strlen(str);
-  if(len <= 1) return *str >= '0' && *str <= '9';
-  return *str >= '1' && *str <= '9';
-}
-
 //TODO Test this function.
 int
 parse_int(
@@ -172,5 +157,20 @@ parse_int(
   if(errno == ERANGE || *endptr != '\0' || str == endptr) return 0;
   if (v < INT_MIN || v > INT_MAX) return 0;
   *value = (int) v;
+  return 1;
+}
+
+int
+parse_float(
+  const char *str,
+  float *value
+) {
+  char *endptr;
+  float v;
+  errno = 0;
+  v = strtof(str, &endptr);
+  if(errno == ERANGE || *endptr != '\0' || str == endptr) return 0;
+  if (v == HUGE_VALF || v == -HUGE_VALF) return 0;
+  *value = (float) v;
   return 1;
 }

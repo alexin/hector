@@ -14,7 +14,7 @@ static const char *ast_type_str[] = {
   "PROGRAM",
   "MINUS",
   "ADD", "SUB", "MUL", "DIV", "POW",
-  "INTLIT"
+  "INTLIT", "FLOATLIT"
 };
 
 /*----------------------------------------------------------------------------*/
@@ -117,6 +117,9 @@ ast_print(
     case ast_INTLIT:
       tab_printf(depth, "IntLit(%s)\n", ((char*)node->value));
       break;
+    case ast_FLOATLIT:
+      tab_printf(depth, "FloatLit(%s)\n", ((char*)node->value));
+      break;
     default:
       tab_printf(
         depth,
@@ -201,6 +204,17 @@ ast_create_intlit(
 ) {
   struct ast_node *node;
   node = ast_create_node(ast_INTLIT);
+  if(node == NULL) return NULL;
+  node->value = (void*) value;
+  return node;
+}
+
+struct ast_node*
+ast_create_floatlit(
+  char *value
+) {
+  struct ast_node *node;
+  node = ast_create_node(ast_FLOATLIT);
   if(node == NULL) return NULL;
   node->value = (void*) value;
   return node;
