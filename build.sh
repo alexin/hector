@@ -19,10 +19,13 @@ if [ ${cmdarg_cfg['clean']} ]; then
   rm ${PROGRAM}.tab.h
   rm ${PROGRAM}.tab.c
   rm ${PROGRAM}.output
-  # Others
+  # Program
   rm ${PROGRAM}
   rm -r ${PROGRAM}.dSYM
   rm ${PROGRAM}.zip
+  # lib
+  rm lib
+  rm -r lib.dSYM
   exit
 fi
 
@@ -65,7 +68,7 @@ if [ ${cmdarg_cfg['valgrind']} ]; then
 fi
 
 # Program
-clang -g -Wall -Wno-unused-function *.c -o ${PROGRAM}
+clang -g -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c translation.c -o ${PROGRAM}
 OK="$?"
 if [ ! "$OK" = "0" ]; then
   exit
