@@ -1,0 +1,93 @@
+TypeSepc
+  : VOID | INT | FLOAT
+  ;
+
+Expr
+  : AssignExpr
+  ;
+
+AssignExpr
+  : CondExpr
+  | UnaryExpr ASSIGN AssignExpr
+  ;
+
+CondExpr
+  : OrExpr
+  ;
+
+ConstantExpr
+  : CondExpr
+  ;
+
+OrExpr
+  : AndExpr
+  | OrExpr OR AndExpr
+  ;
+
+AndExpr
+  : EqExpr
+  | AndExpr AND EqExpr
+  ;
+
+EqExpr
+  : RelExpr
+  | EqExpr EQ RelExpr
+  | EqExpr NE RelExpr
+  ;
+
+RelExpr
+  : ShiftExpr
+  | RelExpr LT ShiftExpr
+  | RelExpr GT ShiftExpr
+  | RelExpr LE ShiftExpr
+  | RelExpr GE ShiftExpr
+  ;
+
+ShiftExpr
+  : AddExpr
+  ;
+
+AddExpr
+  : MultExpr
+  | AddExpr PLUS MultExpr
+  | AddExpr MINUS MultExpr
+  ;
+
+MultExpr
+  : CastExpr
+  | MultExpr * CastExpr
+  | MultExpr / CastExpr
+  ;
+
+CastExpr
+  : UnaryExpr
+  | LPAR TypeSpec RPAR CastExpr
+  ;
+
+UnaryExpr
+  : PostExpr
+  | PLUS CastExpr
+  | MINUS CastExpr
+  ;
+
+PostExpr
+  : PrimaryExpr
+  | PostExpr LPAR RPAR
+  | PostExpr LPAR ArgExprList RPAR
+  ;
+
+PrimaryExpr
+  : ID
+  | Constant
+  | LPAR Expr RPAR
+  ;
+
+ArgExprList
+  : AssignExpr
+  | ArgExprList COMMA AssignExpr
+  ;
+
+Constant
+  : integer
+  | float
+  ;
