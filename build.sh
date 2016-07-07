@@ -68,7 +68,7 @@ if [ ${cmdarg_cfg['valgrind']} ]; then
 fi
 
 # Program
-clang -g -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c translation.c -o ${PROGRAM}
+clang -g -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c symbols.c translation.c -o ${PROGRAM}
 OK="$?"
 if [ ! "$OK" = "0" ]; then
   exit

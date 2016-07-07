@@ -1,9 +1,77 @@
-TypeSepc
-  : VOID | INT | FLOAT
+
+FuncDef
+  : DeclSpec Declarator DeclList CompStat
+  | DeclSpec Declarator CompStat
+  | Declarator DeclList CompStat
+  | Declarator CompStat
+  ;
+
+DeclSpec
+  : TypeSpec
+  | TypeSpec DeclSpec
+  ;
+
+DeclList
+  : Decl
+  | DeclList Decl
+  ;
+
+Declarator
+  : Pointer DirDeclarator
+  | DirDeclarator
+  ;
+
+DirDeclarator
+  : ID
+  ;
+
+Stat
+  : ExprStat
+  | CompStat
+  | SelectStat
+  | IterStat
+  | JumpStat
+  ;
+
+ExprStat
+  : OptExpr SEMI
+  ;
+
+CompStat
+  : LBRA DeclList StatList RBRA
+  | LBRA DeclList RBRA
+  | LBRA StatList RBRA
+  | LBRA RBRA
+  ;
+
+StatList
+  : Stat
+  | StatList Stat
+  ;
+
+SelectStat
+  : IF LPAR Expr RPAR Stat
+  | IF LPAR Expr RPAR Stat ELSE Stat
+  ;
+
+IterStat
+  : WHILE LPAR Expr RPAR
+  | FOR LPAR OptExpr SEMI OptExpr SEMI OptExpr RPAR Stat
+  ;
+
+JumpStat
+  : CONTINUE
+  | BREAK
+  | RETURN OptExpr
   ;
 
 Expr
   : AssignExpr
+  ;
+
+OptExpr
+  : Expr
+  | /* EMPTY */
   ;
 
 AssignExpr

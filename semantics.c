@@ -5,104 +5,149 @@
 #include <string.h>
 
 #include "hectorc.h"
+#include "symbols.h"
 
-static int check_expression(struct ast_node *expr);
-static int check_binary_expression(struct ast_node *expr);
-static int check_unary_expression(struct ast_node *expr);
-static int check_intlit(struct ast_node *intlit);
-static int check_floatlit(struct ast_node *floatlit);
-static int check_vector(struct ast_node *vector);
+#define UNKNOWN_SYMBOL(L,C,S) printf(\
+  "Line %d, column %d: Unknown symbol: %s\n", (L), (C), (S));
+
+#define SYMBOL_ALREADY_DEFINED(L,C,S) printf(\
+  "Line %d, column %d: Symbol already defined: %s\n", (L), (C), (S));
+
+#define INVALID_INTLIT(L,C,S) printf(\
+      "Line %d, column %d: Invalid integer literal: %s\n", (L), (C), (S));
+
+#define UNEXPECTED_NODE(N) printf("Unexpected AST node type: %s\n",\
+      get_ast_type_str((N)->type));
+
+static void check_stat (SymTab *tab, AstNode *stat);
+static void check_print (SymTab *tab, AstNode *stat);
+static void check_vardecl (SymTab *tab, AstNode *stat);
+static void check_pointlit (AstNode *pointlit);
+static void check_intlit (AstNode *intlit);
 
 /*----------------------------------------------------------------------------*/
 
-int check_expression(struct ast_node *expr) {
-  switch(expr->type) {
-    case ast_MINUS: return check_unary_expression(expr);
-    case ast_PLUS: return check_unary_expression(expr);
-
-    case ast_ADD: return check_binary_expression(expr);
-    case ast_SUB: return check_binary_expression(expr);
-    case ast_MUL: return check_binary_expression(expr);
-    case ast_DIV: return check_binary_expression(expr);
-    case ast_POW: return check_binary_expression(expr);
-
-    case ast_INTLIT: return check_intlit(expr);
-    case ast_FLOATLIT: return check_floatlit(expr);
-
-    case ast_VECTOR: return check_vector(expr);
+void check_stat (SymTab *tab, AstNode *stat) {
+  switch(stat->type) {
+    case ast_PRINT: check_print(tab, stat); break;
+    case ast_VARDECL: check_vardecl(tab, stat); break;
 
     default:
-      printf("Unexpected AST node type: %s\n", get_ast_type_str(expr->type));
-      return 0;
+      has_semantic_errors = 1;
+      UNEXPECTED_NODE(stat)
   }
 }
 
-int check_unary_expression(struct ast_node *expr) {
-  struct ast_node *rhs;
-  rhs = expr->child;
-  return check_expression(rhs);
+void check_print (SymTab *tab, AstNode *stat) {
+  char *id;
+  AstNode *id_node;
+  Symbol *sym;
+
+  if (stat->type != ast_PRINT) {
+    has_semantic_errors = 1;
+    UNEXPECTED_NODE(stat)
+    return;
+  }
+
+  id_node = stat->child;
+  id = (char*) id_node->value;
+  sym = sym_get(tab, id);
+
+  // This symbol was never declared.
+  if (sym == NULL) {
+    has_semantic_errors = 1;
+    UNKNOWN_SYMBOL(id_node->line, id_node->column, id)
+    return;
+  }
 }
 
-int check_binary_expression(struct ast_node *expr) {
-  struct ast_node *lhs, *rhs;
-  lhs = expr->child;
-  if(lhs == NULL) return 0;
-  rhs = expr->child->sibling;
-  return check_expression(lhs) && check_expression(rhs);
+void check_vardecl (SymTab *tab, AstNode *stat) {
+  char *id;
+  AstNode *id_node, *pointlit;
+  Symbol *sym;
+
+  if (stat->type != ast_VARDECL) {
+    has_semantic_errors = 1;
+    UNEXPECTED_NODE(stat)
+    return;
+  }
+
+  id_node = stat->child;
+  pointlit = stat->child->sibling;
+  id = (char*) id_node->value;
+  sym = sym_get(tab, id);
+
+  // The symbol has already been used elsewhere.
+  if (sym != NULL) {
+    has_semantic_errors = 1;
+    SYMBOL_ALREADY_DEFINED(id_node->line, id_node->column, id)
+
+  // it is OK to use this symbol.
+  } else {
+    sym_put(tab, sym_VAR, id);
+  }
+
+  // We check the initializer.
+  check_pointlit(pointlit);
 }
 
-/*----------------------------------------------------------------------------*/
+void check_pointlit (AstNode *pointlit) {
+  AstNode *comps;
 
-int check_intlit(struct ast_node *intlit) {
+  if (pointlit->type != ast_POINTLIT) {
+    has_semantic_errors = 1;
+    UNEXPECTED_NODE(pointlit)
+    return;
+  }
+
+  // We check the components of this point.
+  comps = pointlit->child;
+  while (comps != NULL) {
+    check_intlit(comps);
+    comps = comps->sibling;
+  }
+}
+
+void check_intlit (AstNode *intlit) {
   int ivalue;
   char *svalue;
+
+  if (intlit->type != ast_INTLIT) {
+    has_semantic_errors = 1;
+    UNEXPECTED_NODE(intlit)
+    return;
+  }
+
   svalue = (char*) intlit->value;
-  if(strlen(svalue) > 1 && svalue[0] == '0') {
-    printf("Invalid integer literal: %s\n", svalue);
-    return 0;
-  }
-  if(!parse_int(svalue, &ivalue)) {
-    printf("Invalid integer literal: %s\n", svalue);
-    return 0;
-  }
-  return 1;
-}
 
-int check_floatlit(struct ast_node *floatlit) {
-  float fvalue;
-  char *svalue;
-  svalue = (char*) floatlit->value;
-  if(!parse_float(svalue, &fvalue)) {
-    printf("Invalid float literal: %s\n", svalue);
-    return 0;
+  // We reject integers with leading zeros.
+  if (strlen(svalue) > 1 && svalue[0] == '0') {
+    has_semantic_errors = 1;
+    INVALID_INTLIT(intlit->line, intlit->column, svalue)
   }
-  return 1;
+  // This is not an integer at all.
+  if (!parse_int(svalue, &ivalue)) {
+    has_semantic_errors = 1;
+    INVALID_INTLIT(intlit->line, intlit->column, svalue)
+  }
 }
 
 /*----------------------------------------------------------------------------*/
 
-int check_vector(struct ast_node *vector) {
-  struct ast_node *component;
-  int has_errors;
-  if(ast_count_siblings(vector->child) < 2) {
-    printf("A vector must have 2 or more components");
-    return 0;
-  }
-  component = vector->child;
-  has_errors = 0;
-  while(component != NULL) {
-    if(!check_expression(component)) has_errors = 1;
-    component = component->sibling;
-  }
-  return !has_errors;
-}
+int check_program (AstNode *program) {
+  AstNode *stat;
 
-/*----------------------------------------------------------------------------*/
-
-int check_program(struct ast_node *program) {
   if(program->type != ast_PROGRAM) {
-    printf("Unknown AST node type: %s\n", get_ast_type_str(program->type));
+    has_semantic_errors = 1;
+    UNEXPECTED_NODE(program)
     return 0;
   }
-  return check_expression(program->child);
+
+  stat = program->child;
+  while (stat != NULL) {
+    check_stat(tab, stat);
+    stat = stat->sibling;
+  }
+
+  return !has_semantic_errors;
 }

@@ -11,23 +11,15 @@
 /*----------------------------------------------------------------------------*/
 
 static const char *ast_type_str[] = {
-  "PROGRAM",
-  "MINUS", "PLUS"
-  "ADD", "SUB", "MUL", "DIV", "POW",
-  "INTLIT", "FLOATLIT",
-  "VECTOR"
+  "ID", "INTLIT", "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
 };
 
 /*----------------------------------------------------------------------------*/
 
-static
-struct ast_node*
-ast_create_node(
-  const enum ast_type type
-) {
-  struct ast_node *node;
+static AstNode* ast_create_node (const AstType type) {
+  AstNode *node;
   node = MALLOC(struct ast_node, 1);
-  if(node == NULL) return NULL;
+  if (node == NULL) return NULL;
   node->type = type;
   node->sibling = NULL;
   node->child = NULL;
@@ -35,11 +27,7 @@ ast_create_node(
   return node;
 }
 
-static
-void
-ast_destroy_node(
-  struct ast_node *node
-) {
+static void ast_destroy_node (AstNode *node) {
   if(node == NULL) return;
   ast_destroy_node(node->sibling);
   ast_destroy_node(node->child);
@@ -47,84 +35,35 @@ ast_destroy_node(
   free((void*)node);
 }
 
-static
-struct ast_node*
-get_last_sibling(
-  struct ast_node *node
-) {
-  struct ast_node *last;
-  if(node == NULL) return NULL;
+static AstNode* ast_get_last_sibling (AstNode *node) {
+  AstNode *last;
+  if (node == NULL) return NULL;
   last = node;
-  while(last->sibling != NULL) last = last->sibling;
+  while (last->sibling != NULL) last = last->sibling;
   return last;
-}
-
-static
-int
-is_ast_type_unary(
-  const enum ast_type type
-) {
-  return type == ast_MINUS || type == ast_PLUS;
-}
-
-static
-int
-is_ast_type_binary(
-  const enum ast_type type
-) {
-  return type == ast_ADD || type == ast_SUB ||
-         type == ast_MUL || type == ast_DIV ||
-         type == ast_POW;
 }
 
 /*----------------------------------------------------------------------------*/
 
-const char*
-get_ast_type_str(
-  const enum ast_type type
-) {
+const char* get_ast_type_str (const AstType type) {
   return ast_type_str[type];
 }
 
-int
-ast_is_unary_expression(
-  const struct ast_node *node
-) {
-  return is_ast_type_unary(node->type);
-}
+void ast_print (AstNode *node, const unsigned int depth) {
+  if (node == NULL) return;
 
-int
-ast_is_binary_expression(
-  const struct ast_node *node
-) {
-  return is_ast_type_binary(node->type);
-}
-
-void
-ast_print(
-  struct ast_node *node,
-  const unsigned int depth
-) {
-  if(node == NULL) return;
-
-  switch(node->type) {
-    case ast_PROGRAM: tab_printf(depth, "Program\n"); break;
-    case ast_ADD: tab_printf(depth, "Add\n"); break;
-    case ast_SUB: tab_printf(depth, "Sub\n"); break;
-    case ast_MUL: tab_printf(depth, "Mul\n"); break;
-    case ast_DIV: tab_printf(depth, "Div\n"); break;
-    case ast_POW: tab_printf(depth, "Pow\n"); break;
-    case ast_MINUS: tab_printf(depth, "Minus\n"); break;
-    case ast_PLUS: tab_printf(depth, "Plus\n"); break;
+  switch (node->type) {
+    case ast_ID: tprintf(depth, "Id(%s)\n", ((char*)node->value)); break;
     case ast_INTLIT:
-      tab_printf(depth, "IntLit(%s)\n", ((char*)node->value));
+      tprintf(depth, "IntLit(%s)\n", ((char*)node->value));
       break;
-    case ast_FLOATLIT:
-      tab_printf(depth, "FloatLit(%s)\n", ((char*)node->value));
-      break;
-    case ast_VECTOR: tab_printf(depth, "Vector\n"); break;
+    case ast_POINTLIT: tprintf(depth, "PointLit\n"); break;
+    case ast_PRINT: tprintf(depth, "Print\n"); break;
+    case ast_PROGRAM: tprintf(depth, "Program\n"); break;
+    case ast_VARDECL: tprintf(depth, "VarDecl\n"); break;
+
     default:
-      tab_printf(
+      tprintf(
         depth,
         "unknown AST node type: %s\n",
         get_ast_type_str(node->type)
@@ -136,134 +75,142 @@ ast_print(
   ast_print(node->sibling, depth);
 }
 
-struct ast_node*
-ast_add_sibling(
-  struct ast_node *node,
-  struct ast_node *sibling /* NULLABLE */
-) {
-  struct ast_node *iter;
-  if(sibling == NULL) return node;
+AstNode* ast_add_sibling (AstNode *node, AstNode *sibling) {
+  AstNode *iter;
+  if (sibling == NULL) return node;
   iter = node;
-  while(iter->sibling != NULL) iter = iter->sibling;
+  while (iter->sibling != NULL) iter = iter->sibling;
   iter->sibling = sibling;
   return node;
 }
 
-struct ast_node*
-ast_set_flag(
-  const int flag,
-  struct ast_node *node /* NULLABLE, LIST */
-) {
-  struct ast_node *iter;
-  iter = node;
-  while(iter != NULL) {
-    iter->flag = flag;
-    iter = iter->sibling;
-  }
-  return node;
-}
-
-unsigned int
-ast_count_siblings(
-  struct ast_node *node /* NULLABLE, LIST */
-) {
-  struct ast_node *iter;
+unsigned int ast_count_siblings (AstNode *node) {
+  AstNode *iter;
   unsigned int count;
   iter = node;
   count = 0;
-  while(iter != NULL) {
+  while (iter != NULL) {
     count++;
     iter = iter->sibling;
   }
   return count;
 }
 
-void
-ast_free(
-  struct ast_node *ast
-) {
+void ast_free (AstNode *ast) {
   ast_destroy_node(ast);
 }
 
+void ast_set_location (AstNode *node, int line, int column) {
+  if (node == NULL) return;
+  node->line = line;
+  node->column = column;
+}
+
+AstNode* ast_get_sibling_by_type (AstType type, AstNode *node) {
+  AstNode *it;
+  it = node;
+  while (it != NULL) {
+    if (it->type == type) return it;
+    it = it->sibling;
+  }
+  return NULL;
+}
+
 /*----------------------------------------------------------------------------*/
 
-struct ast_node*
-ast_create_program(
-  struct ast_node *expr
-) {
-  struct ast_node *node;
-  if(expr == NULL) return NULL;
+AstNode* ast_create_program (AstNode *nodes) {
+  AstNode *node;
+  if (nodes == NULL) return NULL;
   node = ast_create_node(ast_PROGRAM);
-  if(node == NULL) return NULL;
-  node->child = expr;
+  if (node == NULL) return NULL;
+  node->child = nodes;
   return node;
 }
 
-/*----------------------------------------------------------------------------*/
+AstNode* ast_create_vardecl (char *id, AstNode *pointlit) {
+  AstNode *node, *nid;
 
-struct ast_node*
-ast_create_intlit(
-  char *value
-) {
-  struct ast_node *node;
+  node = ast_create_node(ast_VARDECL);
+  if (node == NULL) return NULL;
+
+  nid = ast_create_id(id);
+  if (nid == NULL) {
+    free(node);
+    return NULL;
+  }
+
+  nid->sibling = pointlit;
+  node->child = nid;
+
+  return node;
+}
+
+AstNode* ast_create_id (char *id) {
+  AstNode *node;
+  node = ast_create_node(ast_ID);
+  if (node == NULL) return NULL;
+  node->value = (void*) id;
+  return node;
+}
+
+AstNode* ast_create_intlit (char *value) {
+  AstNode *node;
   node = ast_create_node(ast_INTLIT);
-  if(node == NULL) return NULL;
+  if (node == NULL) return NULL;
   node->value = (void*) value;
   return node;
 }
 
-struct ast_node*
-ast_create_floatlit(
-  char *value
-) {
-  struct ast_node *node;
-  node = ast_create_node(ast_FLOATLIT);
-  if(node == NULL) return NULL;
-  node->value = (void*) value;
+AstNode* ast_create_pointlit (char *x, char *y, char *z) {
+  AstNode *node, *nx, *ny, *nz;
+
+  node = ast_create_node(ast_POINTLIT);
+  if (node == NULL) return NULL;
+
+  nx = ast_create_node(ast_INTLIT);
+  if (nx == NULL) {
+    free(node);
+    return NULL;
+  }
+  nx->value = (void*) x;
+
+  ny = ast_create_node(ast_INTLIT);
+  if (ny == NULL) {
+    free(nx);
+    free(node);
+    return NULL;
+  }
+  ny->value = (void*) y;
+
+  nz = ast_create_node(ast_INTLIT);
+  if (nz == NULL) {
+    free(ny);
+    free(nx);
+    free(node);
+    return NULL;
+  }
+  nz->value = (void*) z;
+
+  ny->sibling = nz;
+  nx->sibling = ny;
+  node->child = nx;
+
   return node;
 }
 
-/*----------------------------------------------------------------------------*/
+AstNode* ast_create_print (char *id) {
+  AstNode *node, *nid;
 
-struct ast_node*
-ast_create_vector(struct ast_node *expr) {
-  struct ast_node *node;
-  if(expr == NULL) return NULL;
-  node = ast_create_node(ast_VECTOR);
-  if(node == NULL) return NULL;
-  node->child = expr;
-  return node;
-}
+  node = ast_create_node(ast_PRINT);
+  if (node == NULL) return NULL;
 
-/*----------------------------------------------------------------------------*/
+  nid = ast_create_id(id);
+  if (nid == NULL) {
+    free(node);
+    return NULL;
+  }
 
-struct ast_node*
-ast_create_unary(
-  const enum ast_type type,
-  struct ast_node *expr
-) {
-  struct ast_node *node;
-  if(!is_ast_type_unary(type)) return NULL;
-  if(expr == NULL) return NULL;
-  node = ast_create_node(type);
-  if(node == NULL) return NULL;
-  node->child = expr;
-  return node;
-}
+  node->child = nid;
 
-struct ast_node*
-ast_create_binary(
-  const enum ast_type type,
-  struct ast_node *lhs,
-  struct ast_node *rhs
-) {
-  struct ast_node *node;
-  if(!is_ast_type_binary(type)) return NULL;
-  if(lhs == NULL) return NULL;
-  if(rhs == NULL) return NULL;
-  node = ast_create_node(type);
-  if(node == NULL) return NULL;
-  lhs->sibling = rhs;
-  node->child = lhs;
   return node;
 }

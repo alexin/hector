@@ -7,111 +7,120 @@
 
 #define UNEXPECTED_NODE(N) printf("Unexpected AST node type: %s\n", get_ast_type_str((N)->type));
 
+static FILE *tr_out;
+
+static void tr_stat (u8 depth, AstNode *stat);
+static void tr_stat_print (u8 depth, AstNode *print);
+static void tr_intlit (AstNode *intlit);
+static void tr_declare_vars (AstNode *program);
+static void tr_init_vars (AstNode *program);
+
 /*----------------------------------------------------------------------------*/
 
-static void tr_expression(FILE *out, struct ast_node *expr);
-static void tr_unary_expression(FILE *out, struct ast_node *expr);
-static void tr_binary_expression(FILE *out, struct ast_node *expr);
-static void tr_intlit(FILE *out, struct ast_node *intlit);
-static void tr_floatlit(FILE *out, struct ast_node *floatlit);
-static void tr_vector(FILE *out, struct ast_node *vector);
-
-/*----------------------------------------------------------------------------*/
-
-void tr_expression(FILE *out, struct ast_node *expr) {
-  if(ast_is_unary_expression(expr)) {
-    tr_unary_expression(out, expr);
-
-  } else if(ast_is_binary_expression(expr)) {
-    tr_binary_expression(out, expr);
-
-  } else if(expr->type == ast_INTLIT) {
-    tr_intlit(out, expr);
-
-  } else if(expr->type == ast_FLOATLIT) {
-    tr_floatlit(out, expr);
-
-  } else if(expr->type == ast_VECTOR) {
-    tr_vector(out, expr);
-
+void tr_stat (u8 depth, AstNode *stat) {
+  if (stat->type == ast_VARDECL) {
+    // ignore
+  } else if (stat->type == ast_PRINT) {
+    tr_stat_print(depth, stat);
   } else {
-    UNEXPECTED_NODE(expr)
+    UNEXPECTED_NODE(stat)
+  }
+}
+
+void tr_stat_print (u8 depth, AstNode *print) {
+  char *id;
+
+  if(print->type != ast_PRINT) {
     has_translation_errors = 1;
+    UNEXPECTED_NODE(print)
   }
+
+  id = (char*) print->child->value;
+  tfprintf(tr_out, depth, "print_vi32(&%s);\n", id);
 }
 
-void tr_unary_expression(FILE *out, struct ast_node *expr) {
-  switch(expr->type) {
-    case ast_MINUS: fprintf(out, "-"); break;
-    case ast_PLUS: fprintf(out, "+"); break;
-    default: UNEXPECTED_NODE(expr) has_translation_errors = 1;
-  }
-  tr_expression(out, expr->child);
-}
-
-void tr_binary_expression(FILE *out, struct ast_node *expr) {
-  struct ast_node *lhs, *rhs;
-
-  lhs = expr->child;
-  rhs = expr->child->sibling;
-
-  if(expr->type == ast_POW) {
-    fprintf(out, "pow(");
-    tr_expression(out, lhs);
-    fprintf(out, ",");
-    tr_expression(out, rhs);
-    fprintf(out, ")");
-  } else {
-    tr_expression(out, lhs);
-    switch(expr->type) {
-      case ast_ADD: fprintf(out, " + "); break;
-      case ast_SUB: fprintf(out, " - "); break;
-      case ast_MUL: fprintf(out, " * "); break;
-      case ast_DIV: fprintf(out, " / "); break;
-      default: UNEXPECTED_NODE(expr) has_translation_errors = 1;
-    }
-    tr_expression(out, rhs);
-  }
-}
-
-void tr_intlit(FILE *out, struct ast_node *intlit) {
+void tr_intlit (AstNode *intlit) {
   int value;
   parse_int(intlit->value, &value);
-  fprintf(out, "%d", value);
+  fprintf(tr_out, "%d", value);
 }
 
-void tr_floatlit(FILE *out, struct ast_node *floatlit) {
-  float value;
-  parse_float(floatlit->value, &value);
-  fprintf(out, "%f", value);
-}
+void tr_declare_vars (AstNode *program) {
+  AstNode *stat;
+  char *id;
 
-/*----------------------------------------------------------------------------*/
-
-void tr_vector(FILE *out, struct ast_node *vector) {
-  struct ast_node *component;
-  fprintf(out, "VECTOR(");
-  component = vector->child;
-  while(component != NULL) {
-    tr_expression(out, component);
-    component = component->sibling;
-    if(component != NULL) fprintf(out, ",");
+  if(program->type != ast_PROGRAM) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(program)
   }
-  fprintf(out, ")");
+
+  stat = program->child;
+  while (stat != NULL) {
+    if (stat->type == ast_VARDECL) {
+      id = (char*) stat->child->value;
+      tfprintf(tr_out, 0, "static vi32 %s;\n", id);
+    }
+    stat = stat->sibling;
+  }
+}
+
+void tr_init_vars (AstNode *program) {
+  AstNode *stat, *pointlit;
+  char *id;
+  int x, y, z;
+
+  if(program->type != ast_PROGRAM) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(program)
+  }
+
+  stat = program->child;
+  while (stat != NULL) {
+    if (stat->type == ast_VARDECL) {
+      id = (char*) stat->child->value;
+      pointlit = stat->child->sibling;
+      parse_int(pointlit->child->value, &x);
+      parse_int(pointlit->child->sibling->value, &y);
+      parse_int(pointlit->child->sibling->sibling->value, &z);
+      tfprintf(tr_out, 1, "set_vi32(&%s, %d, %d, %d, 1);\n", id, x, y, z);
+    }
+    stat = stat->sibling;
+  }
 }
 
 /*----------------------------------------------------------------------------*/
 
-void tr_program(FILE *out, struct ast_node *program) {
-  fprintf(out, "#include <stdio.h>\n");
-  fprintf(out, "#include <stdlib.h>\n");
-  fprintf(out, "#include <math.h>\n\n");
-  fprintf(out, "int main(int argc, char **argv) {\n");
-  fprintf(out, "  float expr;\n");
-  fprintf(out, "  expr = ");
-  tr_expression(out, program->child);
-  fprintf(out, ";\n");
-  fprintf(out, "  printf(\"%%f\\n\", expr);\n");
-  fprintf(out, "  return EXIT_SUCCESS;\n");
-  fprintf(out, "}\n");
+int tr_program (FILE *out, AstNode *program) {
+  AstNode *stat;
+
+  if(program->type != ast_PROGRAM) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(program)
+    return 0;
+  }
+
+  tr_out = out;
+
+  tfprintf(tr_out, 0, "#include <stdio.h>\n");
+  tfprintf(tr_out, 0, "#include <stdlib.h>\n");
+  tfprintf(tr_out, 0, "#include \"lib.h\"\n");
+  tfprintf(tr_out, 0, "\n");
+
+  tr_declare_vars(program);
+
+  tfprintf(tr_out, 0, "\n");
+  tfprintf(tr_out, 0, "int main (int argc, char **argv) {\n");
+
+  tr_init_vars(program);
+
+  stat = program->child;
+  while (stat != NULL) {
+    tr_stat(1, stat);
+    stat = stat->sibling;
+  }
+
+  tfprintf(tr_out, 1, "return EXIT_SUCCESS;\n");
+  tfprintf(tr_out, 0, "}\n");
+
+  return !has_translation_errors;
 }

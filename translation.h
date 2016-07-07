@@ -5,10 +5,6 @@
 
 #include <stdio.h>
 
-void
-tr_program(
-  FILE *out,
-  struct ast_node *program
-);
+int tr_program (FILE *out, AstNode *program);
 
 #endif//H_TRANSLATION

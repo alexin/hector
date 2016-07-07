@@ -3,105 +3,50 @@
 
 /*----------------------------------------------------------------------------*/
 
-enum ast_type {
-  ast_PROGRAM,
+typedef enum ast_type {
 
-  /* Unary expressions. */
-  ast_MINUS, ast_PLUS,
+  // Edit get_ast_type_str if you make any changes to this enum.
+  // Alphabetical order.
 
-  /* Binary expressions. */
-  ast_ADD, ast_SUB, ast_MUL, ast_DIV, ast_POW,
+  ast_ID, ast_INTLIT, ast_POINT, ast_POINTLIT, ast_PRINT, ast_PROGRAM,
+  ast_VARDECL
 
-  /* Literals. */
-  ast_INTLIT, ast_FLOATLIT,
+} AstType;
 
-  ast_VECTOR
-};
-
-struct ast_node {
-  enum ast_type type;
+typedef struct ast_node {
+  AstType type;
   struct ast_node *sibling;
   struct ast_node *child;
   void *value;
-  int flag; /* Multipurpose flag. */
-};
+  int line;
+  int column;
+} AstNode;
 
 /*----------------------------------------------------------------------------*/
 
-const char*
-get_ast_type_str(
-  const enum ast_type type
-);
+const char* get_ast_type_str (const AstType type);
 
-int
-ast_is_unary_expression(
-  const struct ast_node *node
-);
-
-int
-ast_is_binary_expression(
-  const struct ast_node *node
-);
-
-void
-ast_print(
-  struct ast_node *node,
-  const unsigned int depth
-);
+void ast_print (AstNode *node, const unsigned int d);
 
 /* Appends a sibling to end of the list. */
 /* Returns the node itself. */
-struct ast_node*
-ast_add_sibling(
-  struct ast_node *node,
-  struct ast_node *sibling /* NULLABLE, LIST */
-);
+AstNode* ast_add_sibling (AstNode *node, AstNode *sibling);
 
-struct ast_node*
-ast_set_flag(
-  const int flag,
-  struct ast_node *node /* NULLABLE, LIST */
-);
+unsigned int ast_count_siblings (AstNode *node);
 
-unsigned int
-ast_count_siblings(
-  struct ast_node *node /* NULLABLE, LIST */
-);
+void ast_free (AstNode *ast);
 
-void
-ast_free(
-  struct ast_node *ast
-);
+void ast_set_location (AstNode *node, int line, int column);
+
+AstNode* ast_get_sibling_by_type (AstType type, AstNode *node);
 
 /*----------------------------------------------------------------------------*/
 
-struct ast_node*
-ast_create_program(
-  struct ast_node *expr
-);
-
-/*----------------------------------------------------------------------------*/
-
-struct ast_node* ast_create_intlit(char *value);
-struct ast_node* ast_create_floatlit(char *value);
-
-/*----------------------------------------------------------------------------*/
-
-struct ast_node* ast_create_vector(struct ast_node *expr);
-
-/*----------------------------------------------------------------------------*/
-
-struct ast_node*
-ast_create_unary(
-  const enum ast_type type,
-  struct ast_node *expr
-);
-
-struct ast_node*
-ast_create_binary(
-  const enum ast_type type,
-  struct ast_node *lhs,
-  struct ast_node *rhs
-);
+AstNode* ast_create_program (AstNode *nodes);
+AstNode* ast_create_vardecl (char *id, AstNode *pointlit);
+AstNode* ast_create_id (char *id);
+AstNode* ast_create_intlit (char *value);
+AstNode* ast_create_pointlit (char *x, char *y, char *z);
+AstNode* ast_create_print (char *id);
 
 #endif//H_AST

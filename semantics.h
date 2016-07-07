@@ -3,9 +3,6 @@
 
 #include "ast.h"
 
-int
-check_program(
-  struct ast_node *program
-);
+int check_program (AstNode *program);
 
 #endif//H_SEMANTICS
