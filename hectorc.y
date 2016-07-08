@@ -14,6 +14,8 @@ extern char *yytext;
 
 void yyerror (char *message);
 
+AstNode *ast;
+
 /*----------------------------------------------------------------------------*/
 
 %}
@@ -44,6 +46,14 @@ void yyerror (char *message);
 
 %start Program
 
+/*%destructor { ast_free($$); } Program
+%destructor { ast_free($$); } Declaration
+%destructor { ast_free($$); } Stat
+%destructor { ast_free($$); } StatList
+%destructor { ast_free($$); } PointLiteral
+%destructor { free($$); } ID
+%destructor { free($$); } INTLIT*/
+
 %%
 
 Program
@@ -51,7 +61,7 @@ Program
     if (has_syntax_errors) {
       $$ = NULL;
     } else {
-      $$ = program = ast_create_program($1);
+      $$ = ast = program = ast_create_program($1);
       if($$ == NULL) {
         has_syntax_errors = 1;
       }
@@ -66,7 +76,7 @@ Declaration
       ast_free($4);
       $$ = NULL;
     } else {
-      $$ = ast_create_vardecl($2, $4);
+      $$ = ast = ast_create_vardecl($2, $4);
       if($$ == NULL) {
         has_syntax_errors = 1;
         free($2);
@@ -83,14 +93,14 @@ Declaration
 
 Stat
   : Declaration SEMI {
-    $$ = $1;
+    $$ = ast = $1;
   }
   | PRINT ID SEMI {
     if (has_syntax_errors) {
       free($2);
       $$ = NULL;
     } else {
-      $$ = ast_create_print($2);
+      $$ = ast = ast_create_print($2);
       if($$ == NULL) {
         has_syntax_errors = 1;
         free($2);
@@ -106,7 +116,7 @@ Stat
 
 StatList
   : Stat {
-    $$ = $1;
+    $$ = ast = $1;
   }
 
   | StatList Stat {
@@ -115,7 +125,7 @@ StatList
       ast_free($2);
       $$ = NULL;
     } else {
-      $$ = ast_add_sibling($1, $2);
+      $$ = ast = ast_add_sibling($1, $2);
       if($$ == NULL) {
         has_syntax_errors = 1;
         ast_free($1);
@@ -130,7 +140,7 @@ PointLiteral
     if (has_syntax_errors) {
       $$ = NULL;
     } else {
-      $$ = ast_create_pointlit($2, $3, $4);
+      $$ = ast = ast_create_pointlit($2, $3, $4);
       if($$ == NULL) {
         has_syntax_errors = 1;
       } else {
@@ -154,10 +164,12 @@ int main (int argc, char **argv) {
 
 void yyerror (char *message) {
   has_syntax_errors = 1;
+
+  ast_free(ast);
+
   printf(
-    "Line %lu, column %lu: yyerror: %s: %s\n",
-    hc_line,
-    hc_column - strlen(yytext),
+    "Line %lu, column %lu: %s: %s\n",
+    hc_line, hc_column - strlen(yytext),
     message,
     yytext
   );

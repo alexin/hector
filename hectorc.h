@@ -24,10 +24,13 @@ unsigned long hc_line, hc_column;
 struct ast_node *program;
 struct sym_tab *tab;
 
+char *hc_input_file;
+
 int has_lexical_errors;
 int has_syntax_errors;
 int has_semantic_errors;
 int has_translation_errors;
+int has_build_errors;
 
 /*----------------------------------------------------------------------------*/
 

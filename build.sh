@@ -23,9 +23,6 @@ if [ ${cmdarg_cfg['clean']} ]; then
   rm ${PROGRAM}
   rm -r ${PROGRAM}.dSYM
   rm ${PROGRAM}.zip
-  # lib
-  rm lib
-  rm -r lib.dSYM
   exit
 fi
 
@@ -48,7 +45,7 @@ fi
 # clang-analyzer
 if [ ${cmdarg_cfg['analyze']} ]; then
   hash scan-build 2>/dev/null || { echo >&2 "clang-analyzer not installed!"; exit 1; }
-  scan-build -o ${STATIC} -V clang -g -O0 -Wall -Wno-unused-function *.c
+  scan-build -o ${STATIC} -V clang -g -O0 -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c symbols.c translation.c
   OK="$?"
   rm a.out
   rm -r a.out.dSYM
@@ -59,9 +56,9 @@ fi
 # Valgrind
 if [ ${cmdarg_cfg['valgrind']} ]; then
   hash valgrind 2>/dev/null || { echo >&2 "Valgrind not installed!"; exit 1; }
-  clang -g -O0 -Wall -Wno-unused-function *.c -o ${PROGRAM}
+  clang -g -O0 -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c symbols.c translation.c -o ${PROGRAM}
   echo "${VALGRIND_TEST}"
-  valgrind --leak-check=yes ./${PROGRAM} -t < tests/${VALGRIND_TEST}
+  valgrind --leak-check=yes ./${PROGRAM} ${VALGRIND_TEST}
   rm ${PROGRAM}
   rm -r ${PROGRAM}.dSYM
   exit

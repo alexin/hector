@@ -4,7 +4,7 @@
 #include <string.h>
 
 int contains_arg (int argc, char **argv, const char *arg) {
-  u8 i;
+  int i;
   for (i=0; i < argc; i++) {
     if (strcmp(argv[i], arg) == 0) return 1;
   }
@@ -12,5 +12,9 @@ int contains_arg (int argc, char **argv, const char *arg) {
 }
 
 char* get_file (int argc, char **argv) {
+  int i;
+  for (i=1; i < argc; i++) {
+    if (argv[i][0] != '\0' && argv[i][0] != '-') return argv[i];
+  }
   return NULL;
 }

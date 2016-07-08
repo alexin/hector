@@ -1,7 +1,7 @@
 #include "lib.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define GX(V) (V->comps[0])
 #define GY(V) (V->comps[1])
