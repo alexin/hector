@@ -32,7 +32,7 @@ AstNode *ast;
 %type <v_node> Declaration
 %type <v_node> Stat
 %type <v_node> StatList
-%type <v_node> PointLiteral
+%type <v_node> PointLit
 
 %token <v_str> ID
 %token <v_int> INTLIT
@@ -70,7 +70,7 @@ Program
   ;
 
 Declaration
-  : POINT ID EQUAL PointLiteral {
+  : POINT ID EQUAL PointLit {
     if (has_syntax_errors) {
       free($2);
       ast_free($4);
@@ -89,12 +89,31 @@ Declaration
       }
     }
   }
+
+  | POINT ID {
+    if (has_syntax_errors) {
+      free($2);
+      $$ = NULL;
+    } else {
+      $$ = ast = ast_create_vardecl($2, NULL);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        free($2);
+      } else {
+        ast_set_location(
+          ast_get_sibling_by_type(ast_ID, $$->child),
+          @2.first_line, @2.first_column
+        );
+      }
+    }
+  }
   ;
 
 Stat
   : Declaration SEMI {
     $$ = ast = $1;
   }
+
   | PRINT ID SEMI {
     if (has_syntax_errors) {
       free($2);
@@ -135,7 +154,7 @@ StatList
   }
   ;
 
-PointLiteral
+PointLit
   : OBRACKET INTLIT INTLIT INTLIT CBRACKET {
     if (has_syntax_errors) {
       $$ = NULL;

@@ -79,9 +79,15 @@ void tr_init_vars (AstNode *program) {
     if (stat->type == ast_VARDECL) {
       id = (char*) stat->child->value;
       pointlit = stat->child->sibling;
-      parse_int(pointlit->child->value, &x);
-      parse_int(pointlit->child->sibling->value, &y);
-      parse_int(pointlit->child->sibling->sibling->value, &z);
+
+      if (pointlit == NULL) {
+        x = y = z = 0;
+      } else {
+        parse_int(pointlit->child->value, &x);
+        parse_int(pointlit->child->sibling->value, &y);
+        parse_int(pointlit->child->sibling->sibling->value, &z);
+      }
+
       tfprintf(tr_out, 1, "set_vi32(&%s, %d, %d, %d, 1);\n", id, x, y, z);
     }
     stat = stat->sibling;

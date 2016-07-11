@@ -88,7 +88,9 @@ void check_vardecl (SymTab *tab, AstNode *stat) {
   }
 
   // We check the initializer.
-  check_pointlit(pointlit);
+  if (pointlit != NULL) {
+    check_pointlit(pointlit);
+  }
 }
 
 void check_pointlit (AstNode *pointlit) {
