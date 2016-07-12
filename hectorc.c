@@ -14,7 +14,6 @@
 #include "hectorc.tab.h"
 #include "ast.h"
 #include "semantics.h"
-#include "symbols.h"
 #include "translation.h"
 #include "args.h"
 
@@ -184,6 +183,11 @@ int hc_init (int argc, char **argv) {
   if (in_filename != NULL) free(in_filename);
   if (out_filename != NULL) free(out_filename);
 
+  if (hc_in != NULL) {
+    fclose(hc_in);
+    hc_in = NULL;
+  }
+
   if (has_lexical_errors ||
       has_syntax_errors ||
       has_semantic_errors ||
@@ -251,10 +255,6 @@ void hc_translate_program (void) {
 
   tr_program(hc_out, program);
 
-  if (hc_in != NULL) {
-    fclose(hc_in);
-    hc_in = NULL;
-  }
   if (hc_out != NULL) {
     fclose(hc_out);
     hc_out = NULL;

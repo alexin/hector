@@ -33,6 +33,9 @@ AstNode *ast;
 %type <v_node> Stat
 %type <v_node> StatList
 %type <v_node> PointLit
+%type <v_node> Expr
+%type <v_node> AssignExpr
+%type <v_node> PrimaryExpr
 
 %token <v_str> ID
 %token <v_int> INTLIT
@@ -60,10 +63,12 @@ Program
   : StatList {
     if (has_syntax_errors) {
       $$ = NULL;
+      ast_free($1);
     } else {
       $$ = ast = program = ast_create_program($1);
       if($$ == NULL) {
         has_syntax_errors = 1;
+        ast_free($1);
       }
     }
   }
@@ -111,7 +116,12 @@ Declaration
 
 Stat
   : Declaration SEMI {
-    $$ = ast = $1;
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
   }
 
   | PRINT ID SEMI {
@@ -131,11 +141,25 @@ Stat
       }
     }
   }
+
+  | Expr SEMI {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
   ;
 
 StatList
   : Stat {
-    $$ = ast = $1;
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
   }
 
   | StatList Stat {
@@ -158,16 +182,79 @@ PointLit
   : OBRACKET INTLIT INTLIT INTLIT CBRACKET {
     if (has_syntax_errors) {
       $$ = NULL;
+      free($2);
+      free($3);
+      free($4);
     } else {
       $$ = ast = ast_create_pointlit($2, $3, $4);
       if($$ == NULL) {
         has_syntax_errors = 1;
+        free($2);
+        free($3);
+        free($4);
       } else {
         ast_set_location($$->child, @2.first_line, @2.first_column);
         ast_set_location($$->child->sibling, @3.first_line, @3.first_column);
         ast_set_location(
           $$->child->sibling->sibling, @4.first_line, @4.first_column
         );
+      }
+    }
+  }
+  ;
+
+Expr
+  : AssignExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+  ;
+
+AssignExpr
+  : PrimaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+
+  | ID EQUAL Expr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      free($1);
+      ast_free($3);
+    } else {
+      $$ = ast = ast_create_assign($1, $3);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        free($1);
+        ast_free($3);
+      } else {
+        ast_set_location($$->child, @1.first_line, @1.first_column);
+        ast_set_location($$, @2.first_line, @2.first_column);
+      }
+    }
+  }
+  ;
+
+PrimaryExpr
+  : ID {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      free($1);
+    } else {
+      $$ = ast = ast_create_id($1);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        free($1);
+      } else {
+        ast_set_location($$, @1.first_line, @1.first_column);
       }
     }
   }

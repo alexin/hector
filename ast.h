@@ -8,8 +8,8 @@ typedef enum ast_type {
   // Edit get_ast_type_str if you make any changes to this enum.
   // Alphabetical order.
 
-  ast_ID, ast_INTLIT, ast_POINT, ast_POINTLIT, ast_PRINT, ast_PROGRAM,
-  ast_VARDECL
+  ast_ASSIGN, ast_ID, ast_INTLIT, ast_POINT, ast_POINTLIT, ast_PRINT,
+  ast_PROGRAM, ast_VARDECL
 
 } AstType;
 
@@ -48,5 +48,6 @@ AstNode* ast_create_id (char *id);
 AstNode* ast_create_intlit (char *value);
 AstNode* ast_create_pointlit (char *x, char *y, char *z);
 AstNode* ast_create_print (char *id);
+AstNode* ast_create_assign (char *id, AstNode *expr);
 
 #endif//H_AST

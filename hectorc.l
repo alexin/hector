@@ -9,13 +9,14 @@
 #include "hectorc.h"
 #include "args.h"
 
-#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = hc_line; yylloc.first_column = hc_column; yylloc.last_column = hc_column+yyleng-1;
+#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = hc_line;\
+  yylloc.first_column = hc_column; yylloc.last_column = hc_column+yyleng-1;
 
  /* Increments the column count. */
 #define IC (hc_column += yyleng)
 
  /* Prints to STDOUT if debug is on. */
-static void dgb_printf (const char *fmt, ...);
+static void dbg_printf (const char *fmt, ...);
 
  /* Illegal character error. */
 static void on_ic (const char character);
@@ -43,15 +44,15 @@ floatlit                  [0-9]*\.?[0-9]+
 %%
 
  /* Matches an integer literal and optionally prints it. */
-{intlit}                  { IC; on_intlit();          return INTLIT; }
+{intlit}                  { IC; on_intlit(); return INTLIT; }
 
-";"                       { IC; dgb_printf("SEMI\n"); return SEMI; }
-"="                       { IC; dgb_printf("EQUAL\n"); return EQUAL; }
-"["                       { IC; dgb_printf("OBRACKET\n"); return OBRACKET; }
-"]"                       { IC; dgb_printf("CBRACKET\n"); return CBRACKET; }
+";"                       { IC; dbg_printf("SEMI\n"); return SEMI; }
+"="                       { IC; dbg_printf("EQUAL\n"); return EQUAL; }
+"["                       { IC; dbg_printf("OBRACKET\n"); return OBRACKET; }
+"]"                       { IC; dbg_printf("CBRACKET\n"); return CBRACKET; }
 
-"point"                   { IC; dgb_printf("POINT\n"); return POINT; }
-"print"                   { IC; dgb_printf("PRINT\n"); return PRINT; }
+"point"                   { IC; dbg_printf("POINT\n"); return POINT; }
+"print"                   { IC; dbg_printf("PRINT\n"); return PRINT; }
 
  /* Matches an identifier and optionally prints it.
     Must come after keywords. */
@@ -73,7 +74,7 @@ int yywrap () {
   return 1;
 }
 
-void dgb_printf (const char *fmt, ...) {
+void dbg_printf (const char *fmt, ...) {
   if (!hc_debug) return;
   va_list argp;
   va_start(argp, fmt);
@@ -91,11 +92,11 @@ void on_ic (const char character) {
 }
 
 void on_intlit () {
-  dgb_printf("INTLIT(%s)\n", yytext);
+  dbg_printf("INTLIT(%s)\n", yytext);
   yylval.v_int = strdup(yytext);
 }
 
 void on_id () {
-  dgb_printf("ID(%s)\n", yytext);
+  dbg_printf("ID(%s)\n", yytext);
   yylval.v_str = strdup(yytext);
 }

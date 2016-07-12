@@ -1,4 +1,4 @@
-#include "symbols.h"
+#include "semantics.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,8 +10,13 @@
 
 /*-- SYMBOL ------------------------------------------------------------------*/
 
+const char* get_sym_type_str (const SymType type) {
+  return sym_type_str[type];
+}
+
 static Symbol* sym_create_symbol (
-  const SymType type,
+  const SymType sym_type,
+  const SemType sem_type,
   const char *name
 ) {
   Symbol *symbol;
@@ -21,7 +26,8 @@ static Symbol* sym_create_symbol (
   symbol = MALLOC(Symbol, 1);
   if (symbol == NULL) return NULL;
 
-  symbol->type = type;
+  symbol->sym_type = sym_type;
+  symbol->sem_type = sem_type;
   symbol->name = strdup(name);
   if (symbol->name == NULL) {
     free(symbol);
@@ -100,16 +106,17 @@ void sym_add_tab (SymTab *parent, SymTab *child) {
 
 Symbol* sym_put (
   SymTab *tab,
-  const SymType type,
+  const SymType sym_type,
+  const SemType sem_type,
   const char *name
 ) {
   Symbol *last_symbol;
   if (tab->symbols == NULL) {
-    tab->symbols = sym_create_symbol(type, name);
+    tab->symbols = sym_create_symbol(sym_type, sem_type, name);
     return tab->symbols;
   } else {
     last_symbol = sym_last_symbol(tab->symbols);
-    last_symbol->next = sym_create_symbol(type, name);
+    last_symbol->next = sym_create_symbol(sym_type, sem_type, name);
     return tab->symbols;
   }
 }
@@ -132,7 +139,12 @@ void sym_print_global (const SymTab *global) {
   printf("===== Global Symbol Table =====\n");
   symbol = global->symbols;
   while (symbol != NULL) {
-    printf("%s\t", symbol->name);
+    printf(
+      "%s\t%s\t%s\t",
+      symbol->name,
+      get_sym_type_str(symbol->sym_type),
+      get_sem_type_str(symbol->sem_type)
+    );
     printf("\n");
     symbol = symbol->next;
   }

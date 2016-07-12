@@ -11,6 +11,8 @@ static FILE *tr_out;
 
 static void tr_stat (u8 depth, AstNode *stat);
 static void tr_stat_print (u8 depth, AstNode *print);
+static void tr_expr (u8 depth, AstNode *expr);
+static void tr_expr_assign (u8 depth, AstNode *assign);
 static void tr_intlit (AstNode *intlit);
 static void tr_declare_vars (AstNode *program);
 static void tr_init_vars (AstNode *program);
@@ -22,8 +24,10 @@ void tr_stat (u8 depth, AstNode *stat) {
     // ignore
   } else if (stat->type == ast_PRINT) {
     tr_stat_print(depth, stat);
-  } else {
-    UNEXPECTED_NODE(stat)
+  } else { // Defaults to expressions.
+    tfprintf(tr_out, depth, "");
+    tr_expr(depth, stat);
+    fprintf(tr_out, ";\n");
   }
 }
 
@@ -37,6 +41,24 @@ void tr_stat_print (u8 depth, AstNode *print) {
 
   id = (char*) print->child->value;
   tfprintf(tr_out, depth, "print_vi32(&%s);\n", id);
+}
+
+void tr_expr (u8 depth, AstNode *expr) {
+  if (expr->type == ast_ASSIGN) tr_expr_assign(depth, expr);
+  else UNEXPECTED_NODE(expr)
+}
+
+void tr_expr_assign (u8 depth, AstNode *assign) {
+  char *lhs_id, *rhs_id;
+
+  if(assign->type != ast_ASSIGN) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(assign)
+  }
+
+  lhs_id = (char*) assign->child->value;
+  rhs_id = (char*) assign->child->sibling->value;
+  fprintf(tr_out, "%s = %s", lhs_id, rhs_id);
 }
 
 void tr_intlit (AstNode *intlit) {

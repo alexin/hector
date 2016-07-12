@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 
 static const char *ast_type_str[] = {
-  "ID", "INTLIT", "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
+  "ASSIGN", "ID", "INTLIT", "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
 };
 
 /*----------------------------------------------------------------------------*/
@@ -53,6 +53,7 @@ void ast_print (AstNode *node, const unsigned int depth) {
   if (node == NULL) return;
 
   switch (node->type) {
+    case ast_ASSIGN: tprintf(depth, "Assign\n"); break;
     case ast_ID: tprintf(depth, "Id(%s)\n", ((char*)node->value)); break;
     case ast_INTLIT:
       tprintf(depth, "IntLit(%s)\n", ((char*)node->value));
@@ -210,6 +211,26 @@ AstNode* ast_create_print (char *id) {
     return NULL;
   }
 
+  node->child = nid;
+
+  return node;
+}
+
+AstNode* ast_create_assign (char *id, AstNode *expr) {
+  AstNode *node, *nid;
+
+  if (expr == NULL) return NULL;
+
+  node = ast_create_node(ast_ASSIGN);
+  if (node == NULL) return NULL;
+
+  nid = ast_create_id(id);
+  if (nid == NULL) {
+    free(node);
+    return NULL;
+  }
+
+  nid->sibling = expr;
   node->child = nid;
 
   return node;
