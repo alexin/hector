@@ -35,3 +35,9 @@ vi32 cross (const vi32 *a, const vi32 *b) {
 void print_vi32 (const vi32 *v) {
   printf("(%d,%d,%d,%d)\n", GX(v), GY(v), GZ(v), GW(v));
 }
+
+vi32 comps_to_vi32 (i32 x, i32 y, i32 z, i32 w) {
+  vi32 v;
+  set_vi32(&v, x, y, z, 1);
+  return v;
+}

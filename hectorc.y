@@ -14,7 +14,7 @@ extern char *yytext;
 
 void yyerror (char *message);
 
-AstNode *ast;
+static AstNode *ast;
 
 /*----------------------------------------------------------------------------*/
 
@@ -32,10 +32,11 @@ AstNode *ast;
 %type <v_node> Declaration
 %type <v_node> Stat
 %type <v_node> StatList
-%type <v_node> PointLit
 %type <v_node> Expr
 %type <v_node> AssignExpr
 %type <v_node> PrimaryExpr
+%type <v_node> Literal
+%type <v_node> PointLit
 
 %token <v_str> ID
 %token <v_int> INTLIT
@@ -178,31 +179,6 @@ StatList
   }
   ;
 
-PointLit
-  : OBRACKET INTLIT INTLIT INTLIT CBRACKET {
-    if (has_syntax_errors) {
-      $$ = NULL;
-      free($2);
-      free($3);
-      free($4);
-    } else {
-      $$ = ast = ast_create_pointlit($2, $3, $4);
-      if($$ == NULL) {
-        has_syntax_errors = 1;
-        free($2);
-        free($3);
-        free($4);
-      } else {
-        ast_set_location($$->child, @2.first_line, @2.first_column);
-        ast_set_location($$->child->sibling, @3.first_line, @3.first_column);
-        ast_set_location(
-          $$->child->sibling->sibling, @4.first_line, @4.first_column
-        );
-      }
-    }
-  }
-  ;
-
 Expr
   : AssignExpr {
     if (has_syntax_errors) {
@@ -255,6 +231,51 @@ PrimaryExpr
         free($1);
       } else {
         ast_set_location($$, @1.first_line, @1.first_column);
+      }
+    }
+  }
+
+  | Literal {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+  ;
+
+Literal
+  : PointLit {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+  ;
+
+PointLit
+  : OBRACKET INTLIT INTLIT INTLIT CBRACKET {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      free($2);
+      free($3);
+      free($4);
+    } else {
+      $$ = ast = ast_create_pointlit($2, $3, $4);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        free($2);
+        free($3);
+        free($4);
+      } else {
+        ast_set_location($$->child, @2.first_line, @2.first_column);
+        ast_set_location($$->child->sibling, @3.first_line, @3.first_column);
+        ast_set_location(
+          $$->child->sibling->sibling, @4.first_line, @4.first_column
+        );
       }
     }
   }

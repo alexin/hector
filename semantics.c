@@ -116,6 +116,7 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
 void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
   if (expr->type == ast_ASSIGN) check_expr_assign(info, tab, expr);
   else if (expr->type == ast_ID) check_expr_id(info, tab, expr);
+  else if (expr->type == ast_POINTLIT) check_pointlit(info, expr);
   else {
     UNDEFINE(info)
     UNEXPECTED_NODE(expr)

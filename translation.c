@@ -19,6 +19,7 @@ static void tr_expr (u8 depth, AstNode *expr);
 static void tr_expr_assign (u8 depth, AstNode *assign);
 static void tr_expr_id (u8 depth, AstNode *id);
 
+static void tr_pointlit (AstNode *pointlit);
 static void tr_intlit (AstNode *intlit);
 
 static void tr_declare_vars (AstNode *program);
@@ -51,6 +52,7 @@ void tr_stat_print (u8 depth, AstNode *print) {
 void tr_expr (u8 depth, AstNode *expr) {
   if (expr->type == ast_ASSIGN) tr_expr_assign(depth, expr);
   else if (expr->type == ast_ID) tr_expr_id(depth, expr);
+  else if (expr->type == ast_POINTLIT) tr_pointlit(expr);
   else UNEXPECTED_NODE(expr)
 }
 
@@ -80,6 +82,16 @@ void tr_expr_id (u8 depth, AstNode *id) {
 
   id_str = (char*) id->value;
   fprintf(tr_out, "%s", id_str);
+}
+
+void tr_pointlit (AstNode *pointlit) {
+  fprintf(tr_out, "comps_to_vi32(");
+  tr_intlit(pointlit->child);
+  fprintf(tr_out, ", ");
+  tr_intlit(pointlit->child->sibling);
+  fprintf(tr_out, ", ");
+  tr_intlit(pointlit->child->sibling->sibling);
+  fprintf(tr_out, ", 1)");
 }
 
 void tr_intlit (AstNode *intlit) {
