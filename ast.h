@@ -8,8 +8,8 @@ typedef enum ast_type {
   // Edit get_ast_type_str if you make any changes to this enum.
   // Alphabetical order.
 
-  ast_ASSIGN, ast_ID, ast_INTLIT, ast_POINT, ast_POINTLIT, ast_PRINT,
-  ast_PROGRAM, ast_VARDECL
+  ast_ASSIGN, ast_ID, ast_INTLIT, ast_MATRIXLIT, ast_POINT, ast_POINTLIT,
+  ast_PRINT, ast_PROGRAM, ast_VARDECL
 
 } AstType;
 
@@ -40,6 +40,8 @@ void ast_set_location (AstNode *node, int line, int column);
 
 AstNode* ast_get_sibling_by_type (AstType type, AstNode *node);
 
+AstNode* ast_get_child_at (int index, AstNode *parent);
+
 /*----------------------------------------------------------------------------*/
 
 AstNode* ast_create_program (AstNode *nodes);
@@ -47,6 +49,12 @@ AstNode* ast_create_vardecl (char *id, AstNode *pointlit);
 AstNode* ast_create_id (char *id);
 AstNode* ast_create_intlit (char *value);
 AstNode* ast_create_pointlit (char *x, char *y, char *z);
+AstNode* ast_create_matrixlit (
+  char *m11, char *m12, char *m13, char *m14,
+  char *m21, char *m22, char *m23, char *m24,
+  char *m31, char *m32, char *m33, char *m34,
+  char *m41, char *m42, char *m43, char *m44
+);
 AstNode* ast_create_print (char *id);
 AstNode* ast_create_assign (char *id, AstNode *expr);
 

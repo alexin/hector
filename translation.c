@@ -20,6 +20,7 @@ static void tr_expr_assign (u8 depth, AstNode *assign);
 static void tr_expr_id (u8 depth, AstNode *id);
 
 static void tr_pointlit (AstNode *pointlit);
+static void tr_matrixlit (AstNode *matrixlit);
 static void tr_intlit (AstNode *intlit);
 
 static void tr_declare_vars (AstNode *program);
@@ -40,9 +41,10 @@ void tr_stat (u8 depth, AstNode *stat) {
 void tr_stat_print (u8 depth, AstNode *print) {
   char *id;
 
-  if(print->type != ast_PRINT) {
+  if (print->type != ast_PRINT) {
     has_translation_errors = 1;
     UNEXPECTED_NODE(print)
+    return;
   }
 
   id = (char*) print->child->value;
@@ -53,16 +55,22 @@ void tr_expr (u8 depth, AstNode *expr) {
   if (expr->type == ast_ASSIGN) tr_expr_assign(depth, expr);
   else if (expr->type == ast_ID) tr_expr_id(depth, expr);
   else if (expr->type == ast_POINTLIT) tr_pointlit(expr);
-  else UNEXPECTED_NODE(expr)
+  else if (expr->type == ast_MATRIXLIT) tr_matrixlit(expr);
+  else {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(expr)
+    return;
+  }
 }
 
 void tr_expr_assign (u8 depth, AstNode *assign) {
   char *lhs_id;
   AstNode *rhs;
 
-  if(assign->type != ast_ASSIGN) {
+  if (assign->type != ast_ASSIGN) {
     has_translation_errors = 1;
     UNEXPECTED_NODE(assign)
+    return;
   }
 
   lhs_id = (char*) assign->child->value;
@@ -75,9 +83,10 @@ void tr_expr_assign (u8 depth, AstNode *assign) {
 void tr_expr_id (u8 depth, AstNode *id) {
   char *id_str;
 
-  if(id->type != ast_ID) {
+  if (id->type != ast_ID) {
     has_translation_errors = 1;
     UNEXPECTED_NODE(id)
+    return;
   }
 
   id_str = (char*) id->value;
@@ -85,6 +94,12 @@ void tr_expr_id (u8 depth, AstNode *id) {
 }
 
 void tr_pointlit (AstNode *pointlit) {
+  if (pointlit->type != ast_POINTLIT) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(pointlit)
+    return;
+  }
+
   fprintf(tr_out, "comps_to_vi32(");
   tr_intlit(pointlit->child);
   fprintf(tr_out, ", ");
@@ -94,8 +109,41 @@ void tr_pointlit (AstNode *pointlit) {
   fprintf(tr_out, ", 1)");
 }
 
+void tr_matrixlit (AstNode *matrixlit) {
+  if (matrixlit->type != ast_MATRIXLIT) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(matrixlit)
+    return;
+  }
+
+  fprintf(tr_out, "comps_to_mi32(");
+  tr_intlit(ast_get_child_at( 0, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 1, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 2, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 3, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 4, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 5, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 6, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 7, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 8, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at( 9, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at(10, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at(11, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at(12, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at(13, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at(14, matrixlit)); fprintf(tr_out, ", ");
+  tr_intlit(ast_get_child_at(15, matrixlit)); fprintf(tr_out, ")");
+}
+
 void tr_intlit (AstNode *intlit) {
   int value;
+
+  if (intlit->type != ast_INTLIT) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(intlit)
+    return;
+  }
+
   parse_int(intlit->value, &value);
   fprintf(tr_out, "%d", value);
 }
@@ -104,9 +152,10 @@ void tr_declare_vars (AstNode *program) {
   AstNode *stat;
   char *id;
 
-  if(program->type != ast_PROGRAM) {
+  if (program->type != ast_PROGRAM) {
     has_translation_errors = 1;
     UNEXPECTED_NODE(program)
+    return;
   }
 
   stat = program->child;
@@ -124,9 +173,10 @@ void tr_init_vars (AstNode *program) {
   char *id;
   int x, y, z;
 
-  if(program->type != ast_PROGRAM) {
+  if (program->type != ast_PROGRAM) {
     has_translation_errors = 1;
     UNEXPECTED_NODE(program)
+    return;
   }
 
   stat = program->child;
@@ -154,7 +204,7 @@ void tr_init_vars (AstNode *program) {
 int tr_program (FILE *out, AstNode *program) {
   AstNode *stat;
 
-  if(program->type != ast_PROGRAM) {
+  if (program->type != ast_PROGRAM) {
     has_translation_errors = 1;
     UNEXPECTED_NODE(program)
     return 0;

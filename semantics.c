@@ -46,6 +46,7 @@ static void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
 static void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id);
 
 static void check_pointlit (SemInfo *info, AstNode *pointlit);
+static void check_matrixlit (SemInfo *info, AstNode *matrixlit);
 static void check_intlit (SemInfo *info, AstNode *intlit);
 
 /*----------------------------------------------------------------------------*/
@@ -117,6 +118,7 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
   if (expr->type == ast_ASSIGN) check_expr_assign(info, tab, expr);
   else if (expr->type == ast_ID) check_expr_id(info, tab, expr);
   else if (expr->type == ast_POINTLIT) check_pointlit(info, expr);
+  else if (expr->type == ast_MATRIXLIT) check_matrixlit(info, expr);
   else {
     UNDEFINE(info)
     UNEXPECTED_NODE(expr)
@@ -207,6 +209,30 @@ void check_pointlit (SemInfo *info, AstNode *pointlit) {
   while (comps != NULL) {
     check_intlit(&comp_info, comps);
     // A single invalid component invalidates the whole POINT.
+    if (comp_info.type == sem_UNDEF) UNDEFINE(info)
+    comps = comps->sibling;
+  }
+}
+
+void check_matrixlit (SemInfo *info, AstNode *matrixlit) {
+  AstNode *comps;
+  SemInfo comp_info;
+
+  if (matrixlit->type != ast_MATRIXLIT) {
+    has_semantic_errors = 1;
+    UNDEFINE(info)
+    UNEXPECTED_NODE(matrixlit)
+    return;
+  }
+
+  // We start by assuming this MATRIX is semantically correct...
+  info->type = sem_MATRIX;
+
+  //.. then we check the components, one by one.
+  comps = matrixlit->child;
+  while (comps != NULL) {
+    check_intlit(&comp_info, comps);
+    // A single invalid component invalidates the whole MATRIX.
     if (comp_info.type == sem_UNDEF) UNDEFINE(info)
     comps = comps->sibling;
   }

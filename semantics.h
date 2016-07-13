@@ -6,11 +6,11 @@
 /*----------------------------------------------------------------------------*/
 
 typedef enum sem_type {
-  sem_INT, sem_POINT, sem_UNDEF
+  sem_INT, sem_MATRIX, sem_POINT, sem_UNDEF
 } SemType;
 
 static const char *sem_type_str[] = {
-  "INT", "POINT", "UNDEF"
+  "INT", "MATRIX", "POINT", "UNDEF"
 };
 
 /*----------------------------------------------------------------------------*/

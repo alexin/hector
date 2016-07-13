@@ -52,6 +52,7 @@ floatlit                  [0-9]*\.?[0-9]+
 "]"                       { IC; dbg_printf("CBRACKET\n"); return CBRACKET; }
 
 "point"                   { IC; dbg_printf("POINT\n"); return POINT; }
+"matrix"                   { IC; dbg_printf("MATRIX\n"); return MATRIX; }
 "print"                   { IC; dbg_printf("PRINT\n"); return PRINT; }
 
  /* Matches an identifier and optionally prints it.
