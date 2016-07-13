@@ -5,26 +5,31 @@
 
 #include "hectorc.h"
 
-#define UNEXPECTED_NODE(N) printf("Unexpected AST node type: %s\n", get_ast_type_str((N)->type));
+#define UNEXPECTED_NODE(N) printf("Unexpected AST node type (%d): %s\n",\
+  __LINE__, get_ast_type_str((N)->type));
 
 static FILE *tr_out;
 
+/*----------------------------------------------------------------------------*/
+
 static void tr_stat (u8 depth, AstNode *stat);
 static void tr_stat_print (u8 depth, AstNode *print);
+
 static void tr_expr (u8 depth, AstNode *expr);
 static void tr_expr_assign (u8 depth, AstNode *assign);
+static void tr_expr_id (u8 depth, AstNode *id);
+
 static void tr_intlit (AstNode *intlit);
+
 static void tr_declare_vars (AstNode *program);
 static void tr_init_vars (AstNode *program);
 
 /*----------------------------------------------------------------------------*/
 
 void tr_stat (u8 depth, AstNode *stat) {
-  if (stat->type == ast_VARDECL) {
-    // ignore
-  } else if (stat->type == ast_PRINT) {
-    tr_stat_print(depth, stat);
-  } else { // Defaults to expressions.
+  if (stat->type == ast_VARDECL) {/* ignore */}
+  else if (stat->type == ast_PRINT) tr_stat_print(depth, stat);
+  else { // Defaults to expressions.
     tfprintf(tr_out, depth, "");
     tr_expr(depth, stat);
     fprintf(tr_out, ";\n");
@@ -45,11 +50,13 @@ void tr_stat_print (u8 depth, AstNode *print) {
 
 void tr_expr (u8 depth, AstNode *expr) {
   if (expr->type == ast_ASSIGN) tr_expr_assign(depth, expr);
+  else if (expr->type == ast_ID) tr_expr_id(depth, expr);
   else UNEXPECTED_NODE(expr)
 }
 
 void tr_expr_assign (u8 depth, AstNode *assign) {
-  char *lhs_id, *rhs_id;
+  char *lhs_id;
+  AstNode *rhs;
 
   if(assign->type != ast_ASSIGN) {
     has_translation_errors = 1;
@@ -57,8 +64,22 @@ void tr_expr_assign (u8 depth, AstNode *assign) {
   }
 
   lhs_id = (char*) assign->child->value;
-  rhs_id = (char*) assign->child->sibling->value;
-  fprintf(tr_out, "%s = %s", lhs_id, rhs_id);
+  fprintf(tr_out, "%s = ", lhs_id);
+  rhs = assign->child->sibling;
+  tr_expr(depth, rhs);
+  //TODO Warning: self assign
+}
+
+void tr_expr_id (u8 depth, AstNode *id) {
+  char *id_str;
+
+  if(id->type != ast_ID) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(id)
+  }
+
+  id_str = (char*) id->value;
+  fprintf(tr_out, "%s", id_str);
 }
 
 void tr_intlit (AstNode *intlit) {
