@@ -14,23 +14,23 @@ typedef uint8_t u8;
 
 /* 0  = errors only. */
 /* 0 != errors and tokens. */
-int hc_debug;
+extern int hc_debug;
 
 /* The current line and column in the source file being parsed by the lexical */
 /* analyzer. */
 /* Can't be 'yy_size_t' because 'hectorc.lex.h' can't be included. */
-unsigned long hc_line, hc_column;
+extern unsigned long hc_line, hc_column;
 
-struct ast_node *program;
-struct sym_tab *tab;
+extern struct ast_node *program;
+extern struct sym_tab *tab;
 
-char *hc_input_file;
+extern char *hc_input_file;
 
-int has_lexical_errors;
-int has_syntax_errors;
-int has_semantic_errors;
-int has_translation_errors;
-int has_build_errors;
+extern int has_lexical_errors;
+extern int has_syntax_errors;
+extern int has_semantic_errors;
+extern int has_translation_errors;
+extern int has_build_errors;
 
 /*----------------------------------------------------------------------------*/
 
