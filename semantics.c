@@ -13,13 +13,14 @@
   "Line %d, column %d: Symbol already defined: %s\n", (L), (C), (S));
 
 #define INVALID_INTLIT(L,C,S) printf(\
-      "Line %d, column %d: Invalid integer literal: %s\n", (L), (C), (S));
+  "Line %d, column %d: Invalid integer literal: %s\n", (L), (C), (S));
 
 #define CANT_ASSIGN(L,C,RHS,LHS) printf(\
-      "Line %d, column %d: Cannot assign %s to %s\n", (L), (C), (RHS), (LHS));
+  "Line %d, column %d: Cannot assign %s to %s\n", (L), (C), (RHS), (LHS));
 
-#define UNEXPECTED_NODE(N) printf("Unexpected AST node type (%d): %s\n",\
-      __LINE__, get_ast_type_str((N)->type));
+#define UNEXPECTED_NODE(N) fprintf(stderr,\
+  "Unexpected AST node type (%d): %s\n",\
+  __LINE__, get_ast_type_str((N)->type));
 
 #define UNDEFINE(I) (I)->type = sem_UNDEF;
 
@@ -31,8 +32,17 @@ typedef struct sem_info {
 
 /*----------------------------------------------------------------------------*/
 
-const char* get_sem_type_str (const SemType type) {
+const char* get_sem_type_str (SemType type) {
   return sem_type_str[type];
+}
+
+int is_assignable (SemType lhs, SemType rhs) {
+  switch (lhs) {
+    case sem_INT: return rhs == sem_INT;
+    case sem_MATRIX: return rhs == sem_MATRIX;
+    case sem_POINT: return rhs == sem_POINT;
+    case sem_UNDEF: return 0;
+  }
 }
 
 /*----------------------------------------------------------------------------*/
@@ -83,9 +93,9 @@ void check_stat_print (SymTab *tab, AstNode *print) {
 
 void check_stat_vardecl (SymTab *tab, AstNode *decl) {
   char *id;
-  AstNode *id_node, *pointlit;
+  AstNode *type, *nid, *init;
   Symbol *sym;
-  SemInfo point_info;
+  SemInfo info;
 
   if (decl->type != ast_VARDECL) {
     has_semantic_errors = 1;
@@ -93,24 +103,36 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
     return;
   }
 
-  id_node = decl->child;
-  pointlit = decl->child->sibling;
-  id = (char*) id_node->value;
+  type = ast_get_child_at(0, decl);
+  nid = ast_get_child_at(1, decl);
+  init = ast_get_child_at(2, decl);
+  id = (char*) nid->value;
   sym = sym_get(tab, id);
 
   // The symbol has already been used elsewhere.
   if (sym != NULL) {
     has_semantic_errors = 1;
-    SYMBOL_ALREADY_DEFINED(id_node->line, id_node->column, id)
+    SYMBOL_ALREADY_DEFINED(nid->line, nid->column, id)
 
   // it is OK to use this symbol.
   } else {
-    sym_put(tab, sym_VAR, sem_POINT, id);
+    if (type->type == ast_POINT) sym_put(tab, sym_VAR, sem_POINT, id);
+    else if (type->type == ast_MATRIX) sym_put(tab, sym_VAR, sem_MATRIX, id);
+    else UNEXPECTED_NODE(type)
+    sym = sym_get(tab, id);
   }
 
-  // We check the initializer.
-  if (pointlit != NULL) {
-    check_pointlit(&point_info, pointlit);
+  // Finally, we check the initializer.
+  if (init != NULL) {
+    check_expr(&info, tab, init);
+    if (!is_assignable(sym->sem_type, info.type)) {
+      has_semantic_errors = 1;
+      UNDEFINE(&info)
+      CANT_ASSIGN(
+        decl->line, decl->column,
+        get_sem_type_str(info.type), get_sem_type_str(sym->sem_type)
+      )
+    }
   }
 }
 
@@ -153,7 +175,7 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
   // RHS
   rhs = assign->child->sibling;
   check_expr(&rhs_info, tab, rhs);
-  if (sym->sem_type != rhs_info.type) {
+  if (!is_assignable(sym->sem_type, rhs_info.type)) {
     has_semantic_errors = 1;
     UNDEFINE(info)
     CANT_ASSIGN(

@@ -25,6 +25,8 @@ static void tr_intlit (AstNode *intlit);
 
 static void tr_declare_vars (AstNode *program);
 static void tr_init_vars (AstNode *program);
+static void tr_init_point (AstNode *stat);
+static void tr_init_matrix (AstNode *stat);
 
 /*----------------------------------------------------------------------------*/
 
@@ -48,7 +50,7 @@ void tr_stat_print (u8 depth, AstNode *print) {
   }
 
   id = (char*) print->child->value;
-  tfprintf(tr_out, depth, "print_vi32(&%s);\n", id);
+  tfprintf(tr_out, depth, "vi32_print(&%s);\n", id);
 }
 
 void tr_expr (u8 depth, AstNode *expr) {
@@ -94,45 +96,41 @@ void tr_expr_id (u8 depth, AstNode *id) {
 }
 
 void tr_pointlit (AstNode *pointlit) {
+  AstNode *comp;
+
   if (pointlit->type != ast_POINTLIT) {
     has_translation_errors = 1;
     UNEXPECTED_NODE(pointlit)
     return;
   }
 
-  fprintf(tr_out, "comps_to_vi32(");
-  tr_intlit(pointlit->child);
-  fprintf(tr_out, ", ");
-  tr_intlit(pointlit->child->sibling);
-  fprintf(tr_out, ", ");
-  tr_intlit(pointlit->child->sibling->sibling);
-  fprintf(tr_out, ", 1)");
+  fprintf(tr_out, "vi32_from_comps(");
+  comp = pointlit->child;
+  while (comp != NULL) {
+    tr_intlit(comp);
+    if (comp->sibling == NULL) fprintf(tr_out, ", 1)");
+    else fprintf(tr_out, ", ");
+    comp = comp->sibling;
+  }
 }
 
 void tr_matrixlit (AstNode *matrixlit) {
+  AstNode *comp;
+
   if (matrixlit->type != ast_MATRIXLIT) {
     has_translation_errors = 1;
     UNEXPECTED_NODE(matrixlit)
     return;
   }
 
-  fprintf(tr_out, "comps_to_mi32(");
-  tr_intlit(ast_get_child_at( 0, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 1, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 2, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 3, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 4, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 5, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 6, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 7, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 8, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at( 9, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at(10, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at(11, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at(12, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at(13, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at(14, matrixlit)); fprintf(tr_out, ", ");
-  tr_intlit(ast_get_child_at(15, matrixlit)); fprintf(tr_out, ")");
+  fprintf(tr_out, "mi32_from_comps(");
+  comp = matrixlit->child;
+  while (comp != NULL) {
+    tr_intlit(comp);
+    if (comp->sibling == NULL) fprintf(tr_out, ")");
+    else fprintf(tr_out, ", ");
+    comp = comp->sibling;
+  }
 }
 
 void tr_intlit (AstNode *intlit) {
@@ -149,7 +147,7 @@ void tr_intlit (AstNode *intlit) {
 }
 
 void tr_declare_vars (AstNode *program) {
-  AstNode *stat;
+  AstNode *stat, *type;
   char *id;
 
   if (program->type != ast_PROGRAM) {
@@ -161,17 +159,20 @@ void tr_declare_vars (AstNode *program) {
   stat = program->child;
   while (stat != NULL) {
     if (stat->type == ast_VARDECL) {
-      id = (char*) stat->child->value;
-      tfprintf(tr_out, 0, "static vi32 %s;\n", id);
+      type = ast_get_child_at(0, stat);
+      id = (char*) ast_get_child_at(1, stat)->value;
+      if (type->type == ast_POINT)
+        tfprintf(tr_out, 0, "static vi32 %s;\n", id);
+      else if (type->type == ast_MATRIX)
+        tfprintf(tr_out, 0, "static mi32 %s;\n", id);
+      else UNEXPECTED_NODE(type)
     }
     stat = stat->sibling;
   }
 }
 
 void tr_init_vars (AstNode *program) {
-  AstNode *stat, *pointlit;
-  char *id;
-  int x, y, z;
+  AstNode *stat, *type;
 
   if (program->type != ast_PROGRAM) {
     has_translation_errors = 1;
@@ -182,20 +183,76 @@ void tr_init_vars (AstNode *program) {
   stat = program->child;
   while (stat != NULL) {
     if (stat->type == ast_VARDECL) {
-      id = (char*) stat->child->value;
-      pointlit = stat->child->sibling;
-
-      if (pointlit == NULL) {
-        x = y = z = 0;
-      } else {
-        parse_int(pointlit->child->value, &x);
-        parse_int(pointlit->child->sibling->value, &y);
-        parse_int(pointlit->child->sibling->sibling->value, &z);
-      }
-
-      tfprintf(tr_out, 1, "set_vi32(&%s, %d, %d, %d, 1);\n", id, x, y, z);
+      type = ast_get_child_at(0, stat);
+      if (type->type == ast_POINT) tr_init_point(stat);
+      else if (type->type == ast_MATRIX) tr_init_matrix(stat);
+      else UNEXPECTED_NODE(type)
     }
     stat = stat->sibling;
+  }
+}
+
+void tr_init_point (AstNode *stat) {
+  AstNode *pointlit, *comp;
+  char *id;
+
+  if (stat->type != ast_VARDECL) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(stat)
+    return;
+  }
+  if (ast_get_child_at(0, stat)->type != ast_POINT) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(stat->child)
+    return;
+  }
+
+  id = (char*) ast_get_child_at(1, stat)->value;
+  pointlit = ast_get_child_at(2, stat);
+
+  if (pointlit == NULL) {
+    tfprintf(tr_out, 1, "vi32_zero(&%s);\n", id);
+  } else {
+    tfprintf(tr_out, 1, "vi32_set(&%s, ", id);
+    comp = pointlit->child;
+    while (comp != NULL) {
+      tr_intlit(comp);
+      if (comp->sibling == NULL) fprintf(tr_out, ", 1);\n");
+      else fprintf(tr_out, ", ");
+      comp = comp->sibling;
+    }
+  }
+}
+
+void tr_init_matrix (AstNode *stat) {
+  AstNode *matrixlit, *comp;
+  char *id;
+
+  if (stat->type != ast_VARDECL) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(stat)
+    return;
+  }
+  if (ast_get_child_at(0, stat)->type != ast_MATRIX) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(stat->child)
+    return;
+  }
+
+  id = (char*) ast_get_child_at(1, stat)->value;
+  matrixlit = ast_get_child_at(2, stat);
+
+  if (matrixlit == NULL) {
+    tfprintf(tr_out, 1, "mi32_identity(&%s);\n", id);
+  } else {
+    tfprintf(tr_out, 1, "mi32_set(&%s, ", id);
+    comp = matrixlit->child;
+    while (comp != NULL) {
+      tr_intlit(comp);
+      if (comp->sibling == NULL) fprintf(tr_out, ");\n");
+      else fprintf(tr_out, ", ");
+      comp = comp->sibling;
+    }
   }
 }
 

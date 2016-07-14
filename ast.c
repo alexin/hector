@@ -13,12 +13,6 @@
 
 /*----------------------------------------------------------------------------*/
 
-static const char *ast_type_str[] = {
-  "ASSIGN", "ID", "INTLIT", "MATRIXLIT", "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
-};
-
-/*----------------------------------------------------------------------------*/
-
 static AstNode* ast_create_node (const AstType type) {
   AstNode *node;
   node = MALLOC(struct ast_node, 1);
@@ -61,6 +55,7 @@ void ast_print (AstNode *node, const unsigned int depth) {
     case ast_INTLIT:
       tprintf(depth, "IntLit(%s)\n", ((char*)node->value));
       break;
+    case ast_MATRIX: tprintf(depth, "Matrix\n"); break;
     case ast_MATRIXLIT: tprintf(depth, "MatrixLit\n"); break;
     case ast_POINTLIT: tprintf(depth, "PointLit\n"); break;
     case ast_PRINT: tprintf(depth, "Print\n"); break;
@@ -70,8 +65,8 @@ void ast_print (AstNode *node, const unsigned int depth) {
     default:
       tprintf(
         depth,
-        "unknown AST node type: %s\n",
-        get_ast_type_str(node->type)
+        "unknown AST node type (%d): %s\n",
+        __LINE__, get_ast_type_str(node->type)
       );
       return;
   }
@@ -142,7 +137,7 @@ AstNode* ast_create_program (AstNode *nodes) {
   return node;
 }
 
-AstNode* ast_create_vardecl (char *id, AstNode *pointlit) {
+AstNode* ast_create_vardecl (AstNode *type, char *id, AstNode *init) {
   AstNode *node, *nid;
 
   node = ast_create_node(ast_VARDECL);
@@ -154,9 +149,18 @@ AstNode* ast_create_vardecl (char *id, AstNode *pointlit) {
     return NULL;
   }
 
-  nid->sibling = pointlit;
-  node->child = nid;
+  SIBLING(nid, init)
+  SIBLING(type, nid)
+  node->child = type;
 
+  return node;
+}
+
+AstNode* ast_create_type (AstType type) {
+  AstNode *node;
+  if (type != ast_POINT && type != ast_MATRIX) return NULL;
+  node = ast_create_node(type);
+  if (node == NULL) return NULL;
   return node;
 }
 

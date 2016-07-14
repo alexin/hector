@@ -30,6 +30,7 @@ static AstNode *ast;
 
 %type <v_node> Program
 %type <v_node> Declaration
+%type <v_node> Type
 %type <v_node> Stat
 %type <v_node> StatList
 %type <v_node> Expr
@@ -52,13 +53,7 @@ static AstNode *ast;
 
 %start Program
 
-/*%destructor { ast_free($$); } Program
-%destructor { ast_free($$); } Declaration
-%destructor { ast_free($$); } Stat
-%destructor { ast_free($$); } StatList
-%destructor { ast_free($$); } PointLiteral
-%destructor { free($$); } ID
-%destructor { free($$); } INTLIT*/
+/*%destructor { ast_free($$); } Program*/
 
 %%
 
@@ -78,17 +73,33 @@ Program
   ;
 
 Declaration
-  : POINT ID EQUAL PointLit {
+  : Type ID EQUAL Expr {
     if (has_syntax_errors) {
       free($2);
       ast_free($4);
       $$ = NULL;
     } else {
-      $$ = ast = ast_create_vardecl($2, $4);
+      $$ = ast = ast_create_vardecl($1, $2, $4);
       if($$ == NULL) {
         has_syntax_errors = 1;
         free($2);
         ast_free($4);
+      } else {
+        ast_set_location($$, @3.first_line, @3.first_column);
+        ast_set_location(ast_get_child_at(1, $$), @2.first_line, @2.first_column);
+      }
+    }
+  }
+
+  | Type ID {
+    if (has_syntax_errors) {
+      free($2);
+      $$ = NULL;
+    } else {
+      $$ = ast = ast_create_vardecl($1, $2, NULL);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        free($2);
       } else {
         ast_set_location(
           ast_get_sibling_by_type(ast_ID, $$->child),
@@ -97,21 +108,31 @@ Declaration
       }
     }
   }
+  ;
 
-  | POINT ID {
+Type
+  : POINT {
     if (has_syntax_errors) {
-      free($2);
       $$ = NULL;
     } else {
-      $$ = ast = ast_create_vardecl($2, NULL);
-      if($$ == NULL) {
+      $$ = ast = ast_create_type(ast_POINT);
+      if ($$ == NULL) {
         has_syntax_errors = 1;
-        free($2);
       } else {
-        ast_set_location(
-          ast_get_sibling_by_type(ast_ID, $$->child),
-          @2.first_line, @2.first_column
-        );
+        ast_set_location($$, @1.first_line, @1.first_column);
+      }
+    }
+  }
+
+  | MATRIX {
+    if (has_syntax_errors) {
+      $$ = NULL;
+    } else {
+      $$ = ast = ast_create_type(ast_MATRIX);
+      if ($$ == NULL) {
+        has_syntax_errors = 1;
+      } else {
+        ast_set_location($$, @1.first_line, @1.first_column);
       }
     }
   }
