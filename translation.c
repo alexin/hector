@@ -5,9 +5,6 @@
 
 #include "hectorc.h"
 
-#define UNEXPECTED_NODE(N) printf("Unexpected AST node type (%d): %s\n",\
-  __LINE__, get_ast_type_str((N)->type));
-
 static FILE *tr_out;
 
 /*----------------------------------------------------------------------------*/
@@ -93,6 +90,7 @@ void tr_expr_id (u8 depth, AstNode *id) {
 
   id_str = (char*) id->value;
   fprintf(tr_out, "%s", id_str);
+  //TODO Trigger a warning when used as a statement.
 }
 
 void tr_pointlit (AstNode *pointlit) {

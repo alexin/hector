@@ -9,6 +9,74 @@
 
 typedef uint8_t u8;
 
+#define UNEXPECTED_NODE(N) fprintf(stderr,\
+  "(%s:%d) Unexpected AST node type around: %s\n",\
+  __FILE__, __LINE__, ast_type_to_str((N)->type));
+
+#define FAILED_MALLOC fprintf(stderr,\
+  "(%s:%d) Failed to allocate memory\n", __FILE__, __LINE__);
+
+/*-- SEMANTICS ---------------------------------------------------------------*/
+
+typedef enum sem_type {
+  sem_INT, sem_MATRIX, sem_POINT, sem_UNDEF
+} SemType;
+
+const char* sem_type_to_str (SemType type);
+
+typedef struct sem_info {
+  SemType type;
+  int is_lvalue;
+} SemInfo;
+
+void sem_free (SemInfo *info);
+
+/*-- AST ---------------------------------------------------------------------*/
+
+typedef enum ast_type {
+  ast_ASSIGN, ast_ID, ast_INTLIT, ast_MATRIX, ast_MATRIXLIT, ast_POINT,
+  ast_POINTLIT, ast_PRINT, ast_PROGRAM, ast_VARDECL
+} AstType;
+
+const char* ast_type_to_str (AstType type);
+
+typedef struct ast_node {
+  AstType type;
+  struct ast_node *sibling;
+  struct ast_node *child;
+  void *value;
+  int line;
+  int column;
+  SemInfo *info;
+} AstNode;
+
+void ast_free (AstNode *ast);
+
+/*-- SYMBOLS -----------------------------------------------------------------*/
+
+typedef enum sym_type {
+  sym_VAR
+} SymType;
+
+const char* sym_type_to_str (SymType type);
+
+typedef struct symbol {
+  SymType sym_type;
+  SemType sem_type;
+  char *name;
+  struct symbol *next;
+} Symbol;
+
+typedef struct sym_tab {
+  char *name;
+  struct symbol *symbols;
+  struct sym_tab *parent;
+  struct sym_tab *child;
+  struct sym_tab *sibling;
+} SymTab;
+
+/*----------------------------------------------------------------------------*/
+
 /* The include below undefines some macros. What's the point? */
 /* #include "hectorc.lex.h" */
 
@@ -21,8 +89,8 @@ extern int hc_debug;
 /* Can't be 'yy_size_t' because 'hectorc.lex.h' can't be included. */
 extern unsigned long hc_line, hc_column;
 
-extern struct ast_node *program;
-extern struct sym_tab *tab;
+extern AstNode *program;
+extern SymTab *tab;
 
 extern char *hc_input_file;
 

@@ -10,7 +10,11 @@
 
 /*-- SYMBOL ------------------------------------------------------------------*/
 
-const char* get_sym_type_str (const SymType type) {
+static const char *sym_type_str[] = {
+  "VAR"
+};
+
+const char* sym_type_to_str (SymType type) {
   return sym_type_str[type];
 }
 
@@ -142,8 +146,8 @@ void sym_print_global (const SymTab *global) {
     printf(
       "%s\t%s\t%s\t",
       symbol->name,
-      get_sym_type_str(symbol->sym_type),
-      get_sem_type_str(symbol->sem_type)
+      sym_type_to_str(symbol->sym_type),
+      sem_type_to_str(symbol->sem_type)
     );
     printf("\n");
     symbol = symbol->next;

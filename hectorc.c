@@ -29,8 +29,8 @@ extern FILE *yyin;
 
 int hc_debug;
 unsigned long hc_line, hc_column;
-struct ast_node *program;
-struct sym_tab *tab;
+AstNode *program;
+SymTab *tab;
 char *hc_input_file;
 int has_lexical_errors;
 int has_syntax_errors;
@@ -221,8 +221,10 @@ void hc_lexical_analysis_only (void) {
 void hc_syntatic_analysis (void) {
   if (hc_debug) printf("Syntatic analysis...\n");
   yyparse();
-  if (hc_debug && !has_lexical_errors && !has_syntax_errors)
+  if (hc_debug && !has_lexical_errors && !has_syntax_errors) {
+    printf("-- AST --------------------------------------------------------\n");
     ast_print(program, 0);
+  }
   if (hc_debug && has_lexical_errors)
     printf("There are lexical errors.\n");
   if (hc_debug && has_syntax_errors)
@@ -233,8 +235,12 @@ void hc_semantic_analysis (void) {
   if (hc_debug) printf("Semantic analysis...\n");
   tab = sym_create_tab("global", NULL);
   check_program(program);
-  if (hc_debug)
+  if (hc_debug) {
+    printf("-- SYMBOLS ----------------------------------------------------\n");
     sym_print_global(tab);
+    printf("-- ANNOTATED AST ----------------------------------------------\n");
+    ast_print(program, 0);
+  }
   if (hc_debug && has_semantic_errors)
     printf("There are semantic errors.\n");
 }

@@ -18,25 +18,33 @@
 #define CANT_ASSIGN(L,C,RHS,LHS) printf(\
   "Line %d, column %d: Cannot assign %s to %s\n", (L), (C), (RHS), (LHS));
 
-#define UNEXPECTED_NODE(N) fprintf(stderr,\
-  "Unexpected AST node type (%d): %s\n",\
-  __LINE__, get_ast_type_str((N)->type));
-
-#define UNDEFINE(I) (I)->type = sem_UNDEF;
+#define UNDEF(I) (I)->type = sem_UNDEF;
 
 /*----------------------------------------------------------------------------*/
 
-typedef struct sem_info {
-  SemType type;
-} SemInfo;
+static const char *sem_type_str[] = {
+  "INT", "MATRIX", "POINT", "UNDEF"
+};
 
-/*----------------------------------------------------------------------------*/
-
-const char* get_sem_type_str (SemType type) {
+const char* sem_type_to_str (SemType type) {
   return sem_type_str[type];
 }
 
-int is_assignable (SemType lhs, SemType rhs) {
+static SemInfo* sem_create_info (SemType type, int lvalue) {
+  SemInfo *info;
+  info = (SemInfo*) malloc(sizeof(SemInfo));
+  if (info == NULL) return NULL;
+  info->type = type;
+  info->is_lvalue = lvalue;
+  return info;
+}
+
+void sem_free (SemInfo *info) {
+  if (info == NULL) return;
+  free(info);
+}
+
+static int is_assignable (SemType lhs, SemType rhs) {
   switch (lhs) {
     case sem_INT: return rhs == sem_INT;
     case sem_MATRIX: return rhs == sem_MATRIX;
@@ -70,7 +78,7 @@ void check_stat (SymTab *tab, AstNode *stat) {
 
 void check_stat_print (SymTab *tab, AstNode *print) {
   char *id;
-  AstNode *id_node;
+  AstNode *nid;
   Symbol *sym;
 
   if (print->type != ast_PRINT) {
@@ -79,14 +87,21 @@ void check_stat_print (SymTab *tab, AstNode *print) {
     return;
   }
 
-  id_node = print->child;
-  id = (char*) id_node->value;
+  nid = print->child;
+  id = (char*) nid->value;
   sym = sym_get(tab, id);
 
   // This symbol was never declared.
   if (sym == NULL) {
     has_semantic_errors = 1;
-    UNKNOWN_SYMBOL(id_node->line, id_node->column, id)
+    UNKNOWN_SYMBOL(nid->line, nid->column, id)
+    return;
+  }
+
+  nid->info = sem_create_info(sym->sem_type, TRUE);
+  if (nid->info == NULL) {
+    has_semantic_errors = 1;
+    FAILED_MALLOC
     return;
   }
 }
@@ -127,12 +142,19 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
     check_expr(&info, tab, init);
     if (!is_assignable(sym->sem_type, info.type)) {
       has_semantic_errors = 1;
-      UNDEFINE(&info)
+      UNDEF(&info)
       CANT_ASSIGN(
         decl->line, decl->column,
-        get_sem_type_str(info.type), get_sem_type_str(sym->sem_type)
+        sem_type_to_str(info.type), sem_type_to_str(sym->sem_type)
       )
     }
+  }
+
+  nid->info = sem_create_info(sym->sem_type, TRUE);
+  if (nid->info == NULL) {
+    has_semantic_errors = 1;
+    FAILED_MALLOC
+    return;
   }
 }
 
@@ -142,7 +164,7 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
   else if (expr->type == ast_POINTLIT) check_pointlit(info, expr);
   else if (expr->type == ast_MATRIXLIT) check_matrixlit(info, expr);
   else {
-    UNDEFINE(info)
+    UNDEF(info)
     UNEXPECTED_NODE(expr)
   }
 }
@@ -155,7 +177,7 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
 
   if (assign->type != ast_ASSIGN) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
     UNEXPECTED_NODE(assign)
     return;
   }
@@ -167,7 +189,7 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
   // This symbol was never declared.
   if (sym == NULL) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
     UNKNOWN_SYMBOL(lhs_id_node->line, lhs_id_node->column, lhs_id)
     return;
   }
@@ -177,15 +199,32 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
   check_expr(&rhs_info, tab, rhs);
   if (!is_assignable(sym->sem_type, rhs_info.type)) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
     CANT_ASSIGN(
       assign->line, assign->column,
-      get_sem_type_str(rhs_info.type), get_sem_type_str(sym->sem_type)
+      sem_type_to_str(rhs_info.type), sem_type_to_str(sym->sem_type)
     )
     return;
   }
 
   info->type = sym->sem_type;
+  info->is_lvalue = TRUE;
+
+  assign->info = sem_create_info(info->type, info->is_lvalue);
+  if (assign->info == NULL) {
+    has_semantic_errors = 1;
+    UNDEF(info)
+    FAILED_MALLOC
+    return;
+  }
+
+  lhs_id_node->info = sem_create_info(info->type, info->is_lvalue);
+  if (lhs_id_node->info == NULL) {
+    has_semantic_errors = 1;
+    UNDEF(info)
+    FAILED_MALLOC
+    return;
+  }
 }
 
 void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id) {
@@ -194,22 +233,32 @@ void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id) {
 
   if (id->type != ast_ID) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
     UNEXPECTED_NODE(id)
     return;
   }
 
   id_str = (char*) id->value;
   sym = sym_get(tab, id_str);
+
   // This symbol was never declared.
   if (sym == NULL) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
     UNKNOWN_SYMBOL(id->line, id->column, id_str)
     return;
   }
 
   info->type = sym->sem_type;
+  info->is_lvalue = TRUE;
+
+  id->info = sem_create_info(info->type, info->is_lvalue);
+  if (id->info == NULL) {
+    has_semantic_errors = 1;
+    UNDEF(info)
+    FAILED_MALLOC
+    return;
+  }
 }
 
 void check_pointlit (SemInfo *info, AstNode *pointlit) {
@@ -218,21 +267,30 @@ void check_pointlit (SemInfo *info, AstNode *pointlit) {
 
   if (pointlit->type != ast_POINTLIT) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
     UNEXPECTED_NODE(pointlit)
     return;
   }
 
   // We start by assuming this POINT is semantically correct...
   info->type = sem_POINT;
+  info->is_lvalue = FALSE;
 
   //.. then we check the components, one by one.
   comps = pointlit->child;
   while (comps != NULL) {
     check_intlit(&comp_info, comps);
     // A single invalid component invalidates the whole POINT.
-    if (comp_info.type == sem_UNDEF) UNDEFINE(info)
+    if (comp_info.type == sem_UNDEF) UNDEF(info)
     comps = comps->sibling;
+  }
+
+  pointlit->info = sem_create_info(info->type, info->is_lvalue);
+  if (pointlit->info == NULL) {
+    has_semantic_errors = 1;
+    UNDEF(info)
+    FAILED_MALLOC
+    return;
   }
 }
 
@@ -242,21 +300,30 @@ void check_matrixlit (SemInfo *info, AstNode *matrixlit) {
 
   if (matrixlit->type != ast_MATRIXLIT) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
     UNEXPECTED_NODE(matrixlit)
     return;
   }
 
   // We start by assuming this MATRIX is semantically correct...
   info->type = sem_MATRIX;
+  info->is_lvalue = FALSE;
 
   //.. then we check the components, one by one.
   comps = matrixlit->child;
   while (comps != NULL) {
     check_intlit(&comp_info, comps);
     // A single invalid component invalidates the whole MATRIX.
-    if (comp_info.type == sem_UNDEF) UNDEFINE(info)
+    if (comp_info.type == sem_UNDEF) UNDEF(info)
     comps = comps->sibling;
+  }
+
+  matrixlit->info = sem_create_info(info->type, info->is_lvalue);
+  if (matrixlit->info == NULL) {
+    has_semantic_errors = 1;
+    UNDEF(info)
+    FAILED_MALLOC
+    return;
   }
 }
 
@@ -266,7 +333,7 @@ void check_intlit (SemInfo *info, AstNode *intlit) {
 
   if (intlit->type != ast_INTLIT) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
     UNEXPECTED_NODE(intlit)
     return;
   }
@@ -276,17 +343,30 @@ void check_intlit (SemInfo *info, AstNode *intlit) {
   // We reject integers with leading zeros.
   if (strlen(svalue) > 1 && svalue[0] == '0') {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
+    intlit->info = sem_create_info(sem_UNDEF, FALSE);
     INVALID_INTLIT(intlit->line, intlit->column, svalue)
+    return;
   }
   // This is not an integer at all.
   if (!parse_int(svalue, &ivalue)) {
     has_semantic_errors = 1;
-    UNDEFINE(info)
+    UNDEF(info)
+    intlit->info = sem_create_info(sem_UNDEF, FALSE);
     INVALID_INTLIT(intlit->line, intlit->column, svalue)
+    return;
   }
 
   info->type = sem_INT; // OK
+  info->is_lvalue = FALSE;
+
+  intlit->info = sem_create_info(info->type, info->is_lvalue);
+  if (intlit->info == NULL) {
+    has_semantic_errors = 1;
+    UNDEF(info)
+    FAILED_MALLOC
+    return;
+  }
 }
 
 /*----------------------------------------------------------------------------*/

@@ -1,50 +1,15 @@
 #ifndef H_AST
 #define H_AST
 
-/*----------------------------------------------------------------------------*/
+#include "hectorc.h"
 
-typedef enum ast_type {
-
-  // Edit get_ast_type_str if you make any changes to this enum.
-  // Alphabetical order.
-
-  ast_ASSIGN, ast_ID, ast_INTLIT, ast_MATRIX, ast_MATRIXLIT, ast_POINT,
-  ast_POINTLIT, ast_PRINT, ast_PROGRAM, ast_VARDECL
-
-} AstType;
-
-static const char *ast_type_str[] = {
-  "ASSIGN", "ID", "INTLIT", "MATRIX", "MATRIXLIT", "POINT", "POINTLIT",
-  "PRINT", "PROGRAM", "VARDECL"
-};
-
-typedef struct ast_node {
-  AstType type;
-  struct ast_node *sibling;
-  struct ast_node *child;
-  void *value;
-  int line;
-  int column;
-} AstNode;
-
-/*----------------------------------------------------------------------------*/
-
-const char* get_ast_type_str (const AstType type);
-
-void ast_print (AstNode *node, const unsigned int d);
-
+void ast_print (AstNode *node, unsigned int d);
 /* Appends a sibling to end of the list. */
 /* Returns the node itself. */
 AstNode* ast_add_sibling (AstNode *node, AstNode *sibling);
-
 unsigned int ast_count_siblings (AstNode *node);
-
-void ast_free (AstNode *ast);
-
 void ast_set_location (AstNode *node, int line, int column);
-
 AstNode* ast_get_sibling_by_type (AstType type, AstNode *node);
-
 AstNode* ast_get_child_at (int index, AstNode *parent);
 
 /*----------------------------------------------------------------------------*/

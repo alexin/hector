@@ -4,14 +4,21 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "hectorc.h"
-
 #define MALLOC(TYPE,SIZE) ((TYPE*)malloc((SIZE)*sizeof(TYPE)))
 
 #define VALUE(N,V) (N)->value = (void*)(V);
 #define SIBLING(A,B) (A)->sibling = (B);
 
 /*----------------------------------------------------------------------------*/
+
+static const char *ast_type_str[] = {
+  "ASSIGN", "ID", "INTLIT", "MATRIX", "MATRIXLIT", "POINT", "POINTLIT",
+  "PRINT", "PROGRAM", "VARDECL"
+};
+
+const char* ast_type_to_str (AstType type) {
+  return ast_type_str[type];
+}
 
 static AstNode* ast_create_node (const AstType type) {
   AstNode *node;
@@ -21,14 +28,16 @@ static AstNode* ast_create_node (const AstType type) {
   node->sibling = NULL;
   node->child = NULL;
   node->value = NULL;
+  node->info = NULL;
   return node;
 }
 
 static void ast_destroy_node (AstNode *node) {
   if(node == NULL) return;
-  ast_destroy_node(node->sibling);
-  ast_destroy_node(node->child);
-  free((void*)(node->value));
+  ast_destroy_node(node->sibling); node->sibling = NULL;
+  ast_destroy_node(node->child); node->child = NULL;
+  sem_free(node->info); node->info = NULL;
+  free((void*)(node->value)); node->value = NULL;
   free((void*)node);
 }
 
@@ -40,35 +49,68 @@ static AstNode* ast_get_last_sibling (AstNode *node) {
   return last;
 }
 
-/*----------------------------------------------------------------------------*/
-
-const char* get_ast_type_str (const AstType type) {
-  return ast_type_str[type];
+static void ast_print_annotations (const AstNode *node) {
+  if (node->info != NULL) {
+    fprintf(stdout, " - %s", sem_type_to_str(node->info->type));
+    if (node->info->type != sem_UNDEF) {
+      if (node->info->is_lvalue) fprintf(stdout, " - Lvalue");
+      else fprintf(stdout, " - Rvalue");
+    }
+  }
+  fprintf(stdout, "\n");
 }
 
-void ast_print (AstNode *node, const unsigned int depth) {
+void ast_print (AstNode *node, unsigned int depth) {
   if (node == NULL) return;
 
   switch (node->type) {
-    case ast_ASSIGN: tprintf(depth, "Assign\n"); break;
-    case ast_ID: tprintf(depth, "Id(%s)\n", ((char*)node->value)); break;
-    case ast_INTLIT:
-      tprintf(depth, "IntLit(%s)\n", ((char*)node->value));
+    case ast_ASSIGN:
+      tprintf(depth, "Assign");
+      ast_print_annotations(node);
       break;
-    case ast_MATRIX: tprintf(depth, "Matrix\n"); break;
-    case ast_MATRIXLIT: tprintf(depth, "MatrixLit\n"); break;
-    case ast_POINTLIT: tprintf(depth, "PointLit\n"); break;
-    case ast_PRINT: tprintf(depth, "Print\n"); break;
-    case ast_PROGRAM: tprintf(depth, "Program\n"); break;
-    case ast_VARDECL: tprintf(depth, "VarDecl\n"); break;
+    case ast_ID:
+      tprintf(depth, "Id(%s)", ((char*)node->value));
+      ast_print_annotations(node);
+      break;
+    case ast_INTLIT:
+      tprintf(depth, "IntLit(%s)", ((char*)node->value));
+      ast_print_annotations(node);
+      break;
+    case ast_MATRIX:
+      tprintf(depth, "Matrix");
+      ast_print_annotations(node);
+      break;
+    case ast_MATRIXLIT:
+      tprintf(depth, "MatrixLit");
+      ast_print_annotations(node);
+      break;
+    case ast_POINT:
+      tprintf(depth, "Point");
+      ast_print_annotations(node);
+      break;
+    case ast_POINTLIT:
+      tprintf(depth, "PointLit");
+      ast_print_annotations(node);
+      break;
+    case ast_PRINT:
+      tprintf(depth, "Print");
+      ast_print_annotations(node);
+      break;
+    case ast_PROGRAM:
+      tprintf(depth, "Program");
+      ast_print_annotations(node);
+      break;
+    case ast_VARDECL:
+      tprintf(depth, "VarDecl");
+      ast_print_annotations(node);
+      break;
 
     default:
       tprintf(
         depth,
         "unknown AST node type (%d): %s\n",
-        __LINE__, get_ast_type_str(node->type)
+        __LINE__, ast_type_to_str(node->type)
       );
-      return;
   }
 
   ast_print(node->child, depth+1);
