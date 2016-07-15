@@ -10,8 +10,12 @@
 typedef uint8_t u8;
 
 #define UNEXPECTED_NODE(N) fprintf(stderr,\
-  "(%s:%d) Unexpected AST node type around: %s\n",\
+  "(%s:%d) Unexpected AST node type: %s\n",\
   __FILE__, __LINE__, ast_type_to_str((N)->type));
+
+#define UNEXPECTED_SEM_TYPE(T) fprintf(stderr,\
+  "(%s:%d) Unexpected semantic type: %s\n",\
+  __FILE__, __LINE__, sem_type_to_str((T)));
 
 #define FAILED_MALLOC fprintf(stderr,\
   "(%s:%d) Failed to allocate memory\n", __FILE__, __LINE__);

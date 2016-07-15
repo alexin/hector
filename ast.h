@@ -18,7 +18,7 @@ AstNode* ast_create_program (AstNode *nodes);
 
 AstNode* ast_create_vardecl (AstNode *type, char *id, AstNode *init);
 AstNode* ast_create_type (AstType type);
-AstNode* ast_create_print (char *id);
+AstNode* ast_create_print (AstNode *expr);
 
 AstNode* ast_create_id (char *id);
 AstNode* ast_create_assign (char *id, AstNode *expr);

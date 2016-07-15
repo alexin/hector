@@ -148,7 +148,7 @@ Stat
     }
   }
 
-  | PRINT ID SEMI {
+  | PRINT Expr SEMI {
     if (has_syntax_errors) {
       free($2);
       $$ = NULL;
@@ -158,8 +158,7 @@ Stat
         has_syntax_errors = 1;
         free($2);
       } else {
-        ast_set_location(
-          ast_get_sibling_by_type(ast_ID, $$->child),
+        ast_set_location(ast_get_child_at(0, $$),
           @2.first_line, @2.first_column
         );
       }

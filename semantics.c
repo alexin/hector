@@ -77,9 +77,8 @@ void check_stat (SymTab *tab, AstNode *stat) {
 }
 
 void check_stat_print (SymTab *tab, AstNode *print) {
-  char *id;
-  AstNode *nid;
-  Symbol *sym;
+  AstNode *expr;
+  SemInfo info;
 
   if (print->type != ast_PRINT) {
     has_semantic_errors = 1;
@@ -87,23 +86,8 @@ void check_stat_print (SymTab *tab, AstNode *print) {
     return;
   }
 
-  nid = print->child;
-  id = (char*) nid->value;
-  sym = sym_get(tab, id);
-
-  // This symbol was never declared.
-  if (sym == NULL) {
-    has_semantic_errors = 1;
-    UNKNOWN_SYMBOL(nid->line, nid->column, id)
-    return;
-  }
-
-  nid->info = sem_create_info(sym->sem_type, TRUE);
-  if (nid->info == NULL) {
-    has_semantic_errors = 1;
-    FAILED_MALLOC
-    return;
-  }
+  expr = ast_get_child_at(0, print);
+  check_expr(&info, tab, expr);
 }
 
 void check_stat_vardecl (SymTab *tab, AstNode *decl) {
@@ -129,7 +113,7 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
     has_semantic_errors = 1;
     SYMBOL_ALREADY_DEFINED(nid->line, nid->column, id)
 
-  // it is OK to use this symbol.
+  // It's OK to use this symbol.
   } else {
     if (type->type == ast_POINT) sym_put(tab, sym_VAR, sem_POINT, id);
     else if (type->type == ast_MATRIX) sym_put(tab, sym_VAR, sem_MATRIX, id);
@@ -170,10 +154,8 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
 }
 
 void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
-  char *lhs_id;
-  AstNode *lhs_id_node, *rhs;
-  Symbol *sym;
-  SemInfo rhs_info;
+  AstNode *lhs, *rhs;
+  SemInfo lhs_info, rhs_info;
 
   if (assign->type != ast_ASSIGN) {
     has_semantic_errors = 1;
@@ -183,43 +165,27 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
   }
 
   // LHS
-  lhs_id_node = assign->child;
-  lhs_id = (char*) lhs_id_node->value;
-  sym = sym_get(tab, lhs_id);
-  // This symbol was never declared.
-  if (sym == NULL) {
-    has_semantic_errors = 1;
-    UNDEF(info)
-    UNKNOWN_SYMBOL(lhs_id_node->line, lhs_id_node->column, lhs_id)
-    return;
-  }
+  lhs = ast_get_child_at(0, assign);
+  check_expr_id(&lhs_info, tab, lhs);
 
   // RHS
-  rhs = assign->child->sibling;
+  rhs = ast_get_child_at(1, assign);
   check_expr(&rhs_info, tab, rhs);
-  if (!is_assignable(sym->sem_type, rhs_info.type)) {
+
+  if (!is_assignable(lhs_info.type, rhs_info.type)) {
     has_semantic_errors = 1;
     UNDEF(info)
     CANT_ASSIGN(
       assign->line, assign->column,
-      sem_type_to_str(rhs_info.type), sem_type_to_str(sym->sem_type)
+      sem_type_to_str(rhs_info.type), sem_type_to_str(lhs_info.type)
     )
-    return;
+  } else {
+    info->type = lhs_info.type;
+    info->is_lvalue = TRUE;
   }
-
-  info->type = sym->sem_type;
-  info->is_lvalue = TRUE;
 
   assign->info = sem_create_info(info->type, info->is_lvalue);
   if (assign->info == NULL) {
-    has_semantic_errors = 1;
-    UNDEF(info)
-    FAILED_MALLOC
-    return;
-  }
-
-  lhs_id_node->info = sem_create_info(info->type, info->is_lvalue);
-  if (lhs_id_node->info == NULL) {
     has_semantic_errors = 1;
     UNDEF(info)
     FAILED_MALLOC
@@ -246,11 +212,10 @@ void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id) {
     has_semantic_errors = 1;
     UNDEF(info)
     UNKNOWN_SYMBOL(id->line, id->column, id_str)
-    return;
+  } else {
+    info->type = sym->sem_type; // OK
+    info->is_lvalue = TRUE;
   }
-
-  info->type = sym->sem_type;
-  info->is_lvalue = TRUE;
 
   id->info = sem_create_info(info->type, info->is_lvalue);
   if (id->info == NULL) {
@@ -344,21 +309,17 @@ void check_intlit (SemInfo *info, AstNode *intlit) {
   if (strlen(svalue) > 1 && svalue[0] == '0') {
     has_semantic_errors = 1;
     UNDEF(info)
-    intlit->info = sem_create_info(sem_UNDEF, FALSE);
     INVALID_INTLIT(intlit->line, intlit->column, svalue)
-    return;
-  }
+
   // This is not an integer at all.
-  if (!parse_int(svalue, &ivalue)) {
+  } else if (!parse_int(svalue, &ivalue)) {
     has_semantic_errors = 1;
     UNDEF(info)
-    intlit->info = sem_create_info(sem_UNDEF, FALSE);
     INVALID_INTLIT(intlit->line, intlit->column, svalue)
-    return;
+  } else {
+    info->type = sem_INT; // OK
+    info->is_lvalue = FALSE;
   }
-
-  info->type = sem_INT; // OK
-  info->is_lvalue = FALSE;
 
   intlit->info = sem_create_info(info->type, info->is_lvalue);
   if (intlit->info == NULL) {

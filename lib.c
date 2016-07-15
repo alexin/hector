@@ -70,8 +70,8 @@ vi32 cross (const vi32 *a, const vi32 *b) {
   return r;
 }*/
 
-void vi32_print (const vi32 *v) {
-  printf("(%d,%d,%d,%d)\n", GX(v), GY(v), GZ(v), GW(v));
+void vi32_print (vi32 v) {
+  printf("(%d,%d,%d,%d)\n", GX(&v), GY(&v), GZ(&v), GW(&v));
 }
 
 vi32 vi32_from_comps (i32 x, i32 y, i32 z, i32 w) {
@@ -99,12 +99,12 @@ void mi32_identity (mi32 *m) {
               0, 0, 0, 1);
 }
 
-void mi32_print (const mi32 *m) {
-  printf("[%d,%d,%d,%d]\n[%d,%d,%d,%d]\n[%d,%d,%d,%d]\n[%d,%d,%d,%d]\n",
-    G11(m), G12(m), G13(m), G14(m),
-    G21(m), G22(m), G23(m), G24(m),
-    G31(m), G32(m), G33(m), G34(m),
-    G41(m), G42(m), G43(m), G44(m)
+void mi32_print (mi32 m) {
+  printf("|%d,%d,%d,%d|\n|%d,%d,%d,%d|\n|%d,%d,%d,%d|\n|%d,%d,%d,%d|\n",
+    G11(&m), G12(&m), G13(&m), G14(&m),
+    G21(&m), G22(&m), G23(&m), G24(&m),
+    G31(&m), G32(&m), G33(&m), G34(&m),
+    G41(&m), G42(&m), G43(&m), G44(&m)
   );
 }
 

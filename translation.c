@@ -38,7 +38,7 @@ void tr_stat (u8 depth, AstNode *stat) {
 }
 
 void tr_stat_print (u8 depth, AstNode *print) {
-  char *id;
+  AstNode *expr;
 
   if (print->type != ast_PRINT) {
     has_translation_errors = 1;
@@ -46,8 +46,24 @@ void tr_stat_print (u8 depth, AstNode *print) {
     return;
   }
 
-  id = (char*) print->child->value;
-  tfprintf(tr_out, depth, "vi32_print(&%s);\n", id);
+  expr = ast_get_child_at(0, print);
+
+  switch (expr->info->type) {
+    case sem_POINT:
+      tfprintf(tr_out, depth, "vi32_print(");
+      tr_expr(depth, expr);
+      fprintf(tr_out, ");\n");
+      break;
+    case sem_MATRIX:
+      tfprintf(tr_out, depth, "mi32_print(");
+      tr_expr(depth, expr);
+      fprintf(tr_out, ");\n");
+      break;
+    default:
+      has_translation_errors = 1;
+      UNEXPECTED_SEM_TYPE(expr->info->type)
+      return;
+  }
 }
 
 void tr_expr (u8 depth, AstNode *expr) {

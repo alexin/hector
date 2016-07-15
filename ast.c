@@ -9,6 +9,8 @@
 #define VALUE(N,V) (N)->value = (void*)(V);
 #define SIBLING(A,B) (A)->sibling = (B);
 
+#define IFNULL(E) if ((E) == NULL) return NULL;
+
 /*----------------------------------------------------------------------------*/
 
 static const char *ast_type_str[] = {
@@ -172,7 +174,7 @@ AstNode* ast_get_child_at (int index, AstNode *parent) {
 
 AstNode* ast_create_program (AstNode *nodes) {
   AstNode *node;
-  if (nodes == NULL) return NULL;
+  IFNULL(nodes)
   node = ast_create_node(ast_PROGRAM);
   if (node == NULL) return NULL;
   node->child = nodes;
@@ -181,6 +183,8 @@ AstNode* ast_create_program (AstNode *nodes) {
 
 AstNode* ast_create_vardecl (AstNode *type, char *id, AstNode *init) {
   AstNode *node, *nid;
+
+  IFNULL(id)
 
   node = ast_create_node(ast_VARDECL);
   if (node == NULL) return NULL;
@@ -208,6 +212,7 @@ AstNode* ast_create_type (AstType type) {
 
 AstNode* ast_create_id (char *id) {
   AstNode *node;
+  IFNULL(id)
   node = ast_create_node(ast_ID);
   if (node == NULL) return NULL;
   node->value = (void*) id;
@@ -216,6 +221,7 @@ AstNode* ast_create_id (char *id) {
 
 AstNode* ast_create_intlit (char *value) {
   AstNode *node;
+  IFNULL(value)
   node = ast_create_node(ast_INTLIT);
   if (node == NULL) return NULL;
   node->value = (void*) value;
@@ -224,6 +230,8 @@ AstNode* ast_create_intlit (char *value) {
 
 AstNode* ast_create_pointlit (char *x, char *y, char *z) {
   AstNode *node, *nx, *ny, *nz;
+
+  IFNULL(x) IFNULL(y) IFNULL(z)
 
   node = ast_create_node(ast_POINTLIT);
   if (node == NULL) return NULL;
@@ -269,6 +277,11 @@ AstNode* ast_create_matrixlit (
                  *n21, *n22, *n23, *n24,
                  *n31, *n32, *n33, *n34,
                  *n41, *n42, *n43, *n44;
+
+  IFNULL(m11) IFNULL(m12) IFNULL(m13) IFNULL(m14)
+  IFNULL(m21) IFNULL(m22) IFNULL(m23) IFNULL(m24)
+  IFNULL(m31) IFNULL(m32) IFNULL(m33) IFNULL(m34)
+  IFNULL(m41) IFNULL(m42) IFNULL(m43) IFNULL(m44)
 
   node = ast_create_node(ast_MATRIXLIT);
   if (node == NULL) return NULL;
@@ -412,26 +425,19 @@ AstNode* ast_create_matrixlit (
   return node;
 }
 
-AstNode* ast_create_print (char *id) {
-  AstNode *node, *nid;
-
+AstNode* ast_create_print (AstNode *expr) {
+  AstNode *node;
+  if (expr == NULL) return NULL;
   node = ast_create_node(ast_PRINT);
   if (node == NULL) return NULL;
-
-  nid = ast_create_id(id);
-  if (nid == NULL) {
-    free(node);
-    return NULL;
-  }
-
-  node->child = nid;
-
+  node->child = expr;
   return node;
 }
 
 AstNode* ast_create_assign (char *id, AstNode *expr) {
   AstNode *node, *nid;
 
+  if (id == NULL) return NULL;
   if (expr == NULL) return NULL;
 
   node = ast_create_node(ast_ASSIGN);
