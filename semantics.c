@@ -57,17 +57,13 @@ static SemType can_add (SemType lhs, SemType rhs) {
 
     case sem_INT:
       if (rhs == sem_INT) return sem_INT;
-      if (rhs == sem_POINT) return sem_POINT;
-      if (rhs == sem_MATRIX) return sem_MATRIX;
       return sem_UNDEF;
 
     case sem_MATRIX:
-      if (rhs == sem_INT) return sem_MATRIX;
       if (rhs == sem_MATRIX) return sem_MATRIX;
       return sem_UNDEF;
 
     case sem_POINT:
-      if (rhs == sem_INT) return sem_POINT;
       if (rhs == sem_POINT) return sem_POINT;
       return sem_UNDEF;
 
@@ -86,8 +82,8 @@ static void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
 static void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add);
 static void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id);
 
-static void check_pointlit (SemInfo *info, AstNode *pointlit);
 static void check_matrixlit (SemInfo *info, AstNode *matrixlit);
+static void check_pointlit (SemInfo *info, AstNode *pointlit);
 static void check_intlit (SemInfo *info, AstNode *intlit);
 
 /*----------------------------------------------------------------------------*/
@@ -138,7 +134,8 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
 
   // It's OK to use this symbol.
   } else {
-    if (type->type == ast_POINT) sym_put(tab, sym_VAR, sem_POINT, id);
+    if (type->type == ast_INT) sym_put(tab, sym_VAR, sem_INT, id);
+    else if (type->type == ast_POINT) sym_put(tab, sym_VAR, sem_POINT, id);
     else if (type->type == ast_MATRIX) sym_put(tab, sym_VAR, sem_MATRIX, id);
     else UNEXPECTED_NODE(type)
     sym = sym_get(tab, id);
@@ -169,6 +166,7 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
   if (expr->type == ast_ASSIGN) check_expr_assign(info, tab, expr);
   else if (expr->type == ast_ADD) check_expr_add(info, tab, expr);
   else if (expr->type == ast_ID) check_expr_id(info, tab, expr);
+  else if (expr->type == ast_INTLIT) check_intlit(info, expr);
   else if (expr->type == ast_POINTLIT) check_pointlit(info, expr);
   else if (expr->type == ast_MATRIXLIT) check_matrixlit(info, expr);
   else {

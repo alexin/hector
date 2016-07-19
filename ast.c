@@ -14,8 +14,8 @@
 /*----------------------------------------------------------------------------*/
 
 static const char *ast_type_str[] = {
-  "ADD", "ASSIGN", "ID", "INTLIT", "MATRIX", "MATRIXLIT", "POINT", "POINTLIT",
-  "PRINT", "PROGRAM", "VARDECL"
+  "ADD", "ASSIGN", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "POINT",
+  "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
 };
 
 const char* ast_type_to_str (AstType type) {
@@ -76,6 +76,10 @@ void ast_print (AstNode *node, unsigned int depth) {
       break;
     case ast_ID:
       tprintf(depth, "Id(%s)", ((char*)node->value));
+      ast_print_annotations(node);
+      break;
+    case ast_INT:
+      tprintf(depth, "Int");
       ast_print_annotations(node);
       break;
     case ast_INTLIT:
@@ -208,7 +212,11 @@ AstNode* ast_create_vardecl (AstNode *type, char *id, AstNode *init) {
 
 AstNode* ast_create_type (AstType type) {
   AstNode *node;
-  if (type != ast_POINT && type != ast_MATRIX) return NULL;
+  if (
+    type != ast_INT &&
+    type != ast_POINT &&
+    type != ast_MATRIX
+  ) return NULL;
   node = ast_create_node(type);
   if (node == NULL) return NULL;
   return node;
@@ -240,29 +248,26 @@ AstNode* ast_create_pointlit (char *x, char *y, char *z) {
   node = ast_create_node(ast_POINTLIT);
   if (node == NULL) return NULL;
 
-  nx = ast_create_node(ast_INTLIT);
+  nx = ast_create_intlit(x);
   if (nx == NULL) {
     free(node);
     return NULL;
   }
-  nx->value = (void*) x;
 
-  ny = ast_create_node(ast_INTLIT);
+  ny = ast_create_intlit(y);
   if (ny == NULL) {
     free(nx);
     free(node);
     return NULL;
   }
-  ny->value = (void*) y;
 
-  nz = ast_create_node(ast_INTLIT);
+  nz = ast_create_intlit(z);
   if (nz == NULL) {
     free(ny);
     free(nx);
     free(node);
     return NULL;
   }
-  nz->value = (void*) z;
 
   ny->sibling = nz;
   nx->sibling = ny;
@@ -291,24 +296,24 @@ AstNode* ast_create_matrixlit (
   if (node == NULL) return NULL;
 
   // ROW 1
-  n11 = ast_create_node(ast_INTLIT);
+  n11 = ast_create_intlit(m11);
   if (n11 == NULL) {
     free(node);
     return NULL;
   }
-  n12 = ast_create_node(ast_INTLIT);
+  n12 = ast_create_intlit(m12);
   if (n12 == NULL) {
     free(n11);
     free(node);
     return NULL;
   }
-  n13 = ast_create_node(ast_INTLIT);
+  n13 = ast_create_intlit(m13);
   if (n13 == NULL) {
     free(n12); free(n11);
     free(node);
     return NULL;
   }
-  n14 = ast_create_node(ast_INTLIT);
+  n14 = ast_create_intlit(m14);
   if (n14 == NULL) {
     free(n13); free(n12); free(n11);
     free(node);
@@ -316,27 +321,27 @@ AstNode* ast_create_matrixlit (
   }
 
   // ROW 2
-  n21 = ast_create_node(ast_INTLIT);
+  n21 = ast_create_intlit(m21);
   if (n21 == NULL) {
     free(n14); free(n13); free(n12); free(n11);
     free(node);
     return NULL;
   }
-  n22 = ast_create_node(ast_INTLIT);
+  n22 = ast_create_intlit(m22);
   if (n22 == NULL) {
                                      free(n21);
     free(n14); free(n13); free(n12); free(n11);
     free(node);
     return NULL;
   }
-  n23 = ast_create_node(ast_INTLIT);
+  n23 = ast_create_intlit(m23);
   if (n23 == NULL) {
                           free(n22); free(n21);
     free(n14); free(n13); free(n12); free(n11);
     free(node);
     return NULL;
   }
-  n24 = ast_create_node(ast_INTLIT);
+  n24 = ast_create_intlit(m24);
   if (n24 == NULL) {
                free(n23); free(n22); free(n21);
     free(n14); free(n13); free(n12); free(n11);
@@ -345,14 +350,14 @@ AstNode* ast_create_matrixlit (
   }
 
   // ROW 3
-  n31 = ast_create_node(ast_INTLIT);
+  n31 = ast_create_intlit(m31);
   if (n31 == NULL) {
     free(n24); free(n23); free(n22); free(n21);
     free(n14); free(n13); free(n12); free(n11);
     free(node);
     return NULL;
   }
-  n32 = ast_create_node(ast_INTLIT);
+  n32 = ast_create_intlit(m32);
   if (n32 == NULL) {
                                      free(n31);
     free(n24); free(n23); free(n22); free(n21);
@@ -360,7 +365,7 @@ AstNode* ast_create_matrixlit (
     free(node);
     return NULL;
   }
-  n33 = ast_create_node(ast_INTLIT);
+  n33 = ast_create_intlit(m33);
   if (n33 == NULL) {
                           free(n32); free(n31);
     free(n24); free(n23); free(n22); free(n21);
@@ -368,7 +373,7 @@ AstNode* ast_create_matrixlit (
     free(node);
     return NULL;
   }
-  n34 = ast_create_node(ast_INTLIT);
+  n34 = ast_create_intlit(m34);
   if (n34 == NULL) {
                free(n33); free(n32); free(n31);
     free(n24); free(n23); free(n22); free(n21);
@@ -378,7 +383,7 @@ AstNode* ast_create_matrixlit (
   }
 
   // ROW 4
-  n41 = ast_create_node(ast_INTLIT);
+  n41 = ast_create_intlit(m41);
   if (n41 == NULL) {
     free(n34); free(n33); free(n32); free(n31);
     free(n24); free(n23); free(n22); free(n21);
@@ -386,7 +391,7 @@ AstNode* ast_create_matrixlit (
     free(node);
     return NULL;
   }
-  n42 = ast_create_node(ast_INTLIT);
+  n42 = ast_create_intlit(m42);
   if (n42 == NULL) {
                                      free(n41);
     free(n34); free(n33); free(n32); free(n31);
@@ -395,7 +400,7 @@ AstNode* ast_create_matrixlit (
     free(node);
     return NULL;
   }
-  n43 = ast_create_node(ast_INTLIT);
+  n43 = ast_create_intlit(m43);
   if (n43 == NULL) {
                           free(n42); free(n41);
     free(n34); free(n33); free(n32); free(n31);
@@ -404,7 +409,7 @@ AstNode* ast_create_matrixlit (
     free(node);
     return NULL;
   }
-  n44 = ast_create_node(ast_INTLIT);
+  n44 = ast_create_intlit(m44);
   if (n44 == NULL) {
                free(n43); free(n42); free(n41);
     free(n34); free(n33); free(n32); free(n31);
@@ -414,10 +419,10 @@ AstNode* ast_create_matrixlit (
     return NULL;
   }
 
-  VALUE(n11,m11) VALUE(n12,m12) VALUE(n13,m13) VALUE(n14,m14)
-  VALUE(n21,m21) VALUE(n22,m22) VALUE(n23,m23) VALUE(n24,m24)
-  VALUE(n31,m31) VALUE(n32,m32) VALUE(n33,m33) VALUE(n34,m34)
-  VALUE(n41,m41) VALUE(n42,m42) VALUE(n43,m43) VALUE(n44,m44)
+  //VALUE(n11,m11) VALUE(n12,m12) VALUE(n13,m13) VALUE(n14,m14)
+  //VALUE(n21,m21) VALUE(n22,m22) VALUE(n23,m23) VALUE(n24,m24)
+  //VALUE(n31,m31) VALUE(n32,m32) VALUE(n33,m33) VALUE(n34,m34)
+  //VALUE(n41,m41) VALUE(n42,m42) VALUE(n43,m43) VALUE(n44,m44)
 
   SIBLING(n11,n12) SIBLING(n12,n13) SIBLING(n13,n14) SIBLING(n14,n21)
   SIBLING(n21,n22) SIBLING(n22,n23) SIBLING(n23,n24) SIBLING(n24,n31)

@@ -44,6 +44,7 @@ static AstNode *ast;
 %token <v_str> ID
 %token <v_int> INTLIT
 
+%token INT
 %token POINT
 %token MATRIX
 %token PRINT
@@ -113,7 +114,20 @@ Declaration
   ;
 
 Type
-  : POINT {
+  : INT {
+    if (has_syntax_errors) {
+      $$ = NULL;
+    } else {
+      $$ = ast = ast_create_type(ast_INT);
+      if ($$ == NULL) {
+        has_syntax_errors = 1;
+      } else {
+        ast_set_location($$, @1.first_line, @1.first_column);
+      }
+    }
+  }
+
+  | POINT {
     if (has_syntax_errors) {
       $$ = NULL;
     } else {
@@ -298,7 +312,22 @@ PrimaryExpr
   ;
 
 Literal
-  : PointLit {
+  : INTLIT {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      free($1);
+    } else {
+      $$ = ast = ast_create_intlit($1);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        free($1);
+      } else {
+        ast_set_location($$, @1.first_line, @1.first_column);
+      }
+    }
+  }
+
+  | PointLit {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);

@@ -38,7 +38,7 @@ void sem_free (SemInfo *info);
 /*-- AST ---------------------------------------------------------------------*/
 
 typedef enum ast_type {
-  ast_ADD, ast_ASSIGN, ast_ID, ast_INTLIT, ast_MATRIX, ast_MATRIXLIT,
+  ast_ADD, ast_ASSIGN, ast_ID, ast_INT, ast_INTLIT, ast_MATRIX, ast_MATRIXLIT,
   ast_POINT, ast_POINTLIT, ast_PRINT, ast_PROGRAM, ast_VARDECL
 } AstType;
 
