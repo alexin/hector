@@ -47,40 +47,29 @@
 #define S43(M,I) (M)->comps[14] = (I);
 #define S44(M,I) (M)->comps[15] = (I);
 
-void vi32_set (vi32 *v, i32 x, i32 y, i32 z, i32 w) {
+void vi32_set_comps (vi32 *v, i32 x, i32 y, i32 z, i32 w) {
   SX(v,x) SY(v,y) SZ(v,z) SW(v,w);
 }
 
+void vi32_set_vi32 (vi32 *v, vi32 o) {
+  int i; for (i=0; i < 4; i++) v->comps[i] = o.comps[i];
+}
+
+vi32 vi32_from_comps (i32 x, i32 y, i32 z, i32 w) {
+  vi32 v;
+  vi32_set_comps(&v, x, y, z, 1);
+  return v;
+}
+
 void vi32_zero (vi32 *v) {
-  vi32_set (v, 0, 0, 0, 1);
+  vi32_set_comps(v, 0, 0, 0, 1);
 }
-
-/*i32 dot (const vi32 *a, const vi32 *b) {
-  return GX(a)*GX(b) + GY(a)*GY(b) + GZ(a)*GZ(b) + GW(a)*GW(b);
-}
-
-vi32 cross (const vi32 *a, const vi32 *b) {
-  vi32 r;
-  set_vi32(&r,
-    GY(a)*GZ(b) - GZ(a)*GY(b),
-    GZ(a)*GX(b) - GX(a)*GZ(b),
-    GX(a)*GY(b) - GY(a)*GX(b),
-    1
-  );
-  return r;
-}*/
 
 void vi32_print (vi32 v) {
   printf("(%d,%d,%d,%d)\n", GX(&v), GY(&v), GZ(&v), GW(&v));
 }
 
-vi32 vi32_from_comps (i32 x, i32 y, i32 z, i32 w) {
-  vi32 v;
-  vi32_set(&v, x, y, z, 1);
-  return v;
-}
-
-void mi32_set (mi32 *m,
+void mi32_set_comps (mi32 *m,
   i32 m11, i32 m12, i32 m13, i32 m14,
   i32 m21, i32 m22, i32 m23, i32 m24,
   i32 m31, i32 m32, i32 m33, i32 m34,
@@ -92,11 +81,33 @@ void mi32_set (mi32 *m,
   S41(m,m41) S42(m,m42) S43(m,m43) S44(m,m44)
 }
 
+void mi32_set_mi32 (mi32 *m, mi32 o) {
+  int i; for (i=0; i < 16; i++) m->comps[i] = o.comps[i];
+}
+
+mi32 mi32_from_comps (
+  i32 m11, i32 m12, i32 m13, i32 m14,
+  i32 m21, i32 m22, i32 m23, i32 m24,
+  i32 m31, i32 m32, i32 m33, i32 m34,
+  i32 m41, i32 m42, i32 m43, i32 m44
+) {
+  mi32 m;
+  mi32_set_comps(&m,
+    m11, m12, m13, m14,
+    m21, m22, m23, m24,
+    m31, m32, m33, m34,
+    m41, m42, m43, m44
+  );
+  return m;
+}
+
 void mi32_identity (mi32 *m) {
-  mi32_set(m, 1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1);
+  mi32_set_comps(m,
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  );
 }
 
 void mi32_print (mi32 m) {
@@ -108,18 +119,17 @@ void mi32_print (mi32 m) {
   );
 }
 
-mi32 mi32_from_comps (
-  i32 m11, i32 m12, i32 m13, i32 m14,
-  i32 m21, i32 m22, i32 m23, i32 m24,
-  i32 m31, i32 m32, i32 m33, i32 m34,
-  i32 m41, i32 m42, i32 m43, i32 m44
-) {
-  mi32 m;
-  mi32_set(&m,
-    m11, m12, m13, m14,
-    m21, m22, m23, m24,
-    m31, m32, m33, m34,
-    m41, m42, m43, m44
+vi32 vi32_add_vi32 (vi32 lhs, vi32 rhs) {
+  vi32 v;
+  vi32_set_comps(&v,
+    GX(&lhs)+GX(&rhs), GY(&lhs)+GY(&rhs), GZ(&lhs)+GZ(&rhs), 1
   );
+  return v;
+}
+
+mi32 mi32_add_mi32 (mi32 lhs, mi32 rhs) {
+  int i;
+  mi32 m;
+  for (i=0; i < 16; i++) m.comps[i] = lhs.comps[i] + rhs.comps[i];
   return m;
 }

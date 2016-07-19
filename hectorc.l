@@ -50,6 +50,7 @@ floatlit                  [0-9]*\.?[0-9]+
 "="                       { IC; dbg_printf("EQUAL\n"); return EQUAL; }
 "["                       { IC; dbg_printf("OBRACKET\n"); return OBRACKET; }
 "]"                       { IC; dbg_printf("CBRACKET\n"); return CBRACKET; }
+"+"                       { IC; dbg_printf("PLUS\n"); return PLUS; }
 
 "point"                   { IC; dbg_printf("POINT\n"); return POINT; }
 "matrix"                   { IC; dbg_printf("MATRIX\n"); return MATRIX; }

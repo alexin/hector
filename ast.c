@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 
 static const char *ast_type_str[] = {
-  "ASSIGN", "ID", "INTLIT", "MATRIX", "MATRIXLIT", "POINT", "POINTLIT",
+  "ADD", "ASSIGN", "ID", "INTLIT", "MATRIX", "MATRIXLIT", "POINT", "POINTLIT",
   "PRINT", "PROGRAM", "VARDECL"
 };
 
@@ -66,6 +66,10 @@ void ast_print (AstNode *node, unsigned int depth) {
   if (node == NULL) return;
 
   switch (node->type) {
+    case ast_ADD:
+      tprintf(depth, "Add");
+      ast_print_annotations(node);
+      break;
     case ast_ASSIGN:
       tprintf(depth, "Assign");
       ast_print_annotations(node);
@@ -437,11 +441,10 @@ AstNode* ast_create_print (AstNode *expr) {
 AstNode* ast_create_assign (char *id, AstNode *expr) {
   AstNode *node, *nid;
 
-  if (id == NULL) return NULL;
-  if (expr == NULL) return NULL;
+  IFNULL(id)
+  IFNULL(expr)
 
-  node = ast_create_node(ast_ASSIGN);
-  if (node == NULL) return NULL;
+  node = ast_create_node(ast_ASSIGN); IFNULL(node)
 
   nid = ast_create_id(id);
   if (nid == NULL) {
@@ -451,6 +454,20 @@ AstNode* ast_create_assign (char *id, AstNode *expr) {
 
   nid->sibling = expr;
   node->child = nid;
+
+  return node;
+}
+
+AstNode* ast_create_add (AstNode *lhs, AstNode *rhs) {
+  AstNode *node;
+
+  IFNULL(lhs)
+  IFNULL(rhs)
+
+  node = ast_create_node(ast_ADD); IFNULL(node)
+
+  lhs->sibling = rhs;
+  node->child = lhs;
 
   return node;
 }

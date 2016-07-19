@@ -35,6 +35,7 @@ static AstNode *ast;
 %type <v_node> StatList
 %type <v_node> Expr
 %type <v_node> AssignExpr
+%type <v_node> AddExpr
 %type <v_node> PrimaryExpr
 %type <v_node> Literal
 %type <v_node> PointLit
@@ -49,6 +50,7 @@ static AstNode *ast;
 %token SEMI
 
 %left EQUAL
+%left PLUS
 %left OBRACKET CBRACKET
 
 %start Program
@@ -213,7 +215,7 @@ Expr
   ;
 
 AssignExpr
-  : PrimaryExpr {
+  : AddExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
@@ -222,7 +224,7 @@ AssignExpr
     }
   }
 
-  | ID EQUAL Expr {
+  | ID EQUAL AssignExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       free($1);
@@ -235,6 +237,34 @@ AssignExpr
         ast_free($3);
       } else {
         ast_set_location($$->child, @1.first_line, @1.first_column);
+        ast_set_location($$, @2.first_line, @2.first_column);
+      }
+    }
+  }
+  ;
+
+AddExpr
+  : PrimaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+
+  | AddExpr PLUS PrimaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+      ast_free($3);
+    } else {
+      $$ = ast = ast_create_add($1, $3);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        ast_free($1);
+        ast_free($3);
+      } else {
         ast_set_location($$, @2.first_line, @2.first_column);
       }
     }

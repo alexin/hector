@@ -1,0 +1,14 @@
+
+/*-- ADD ---------------------------------------------------------------------*/
+
+int + int     = int
+int + point   = point
+int + matrix  = matrix
+
+point + int     = point
+point + point   = point
+point + matrix  = undef
+
+matrix + int     = matrix
+matrix + point   = undef
+matrix + matrix  = matrix

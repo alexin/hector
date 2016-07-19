@@ -5,6 +5,10 @@
 
 #include "hectorc.h"
 
+#define UNEXPECTED_OPERANDS(L,R) fprintf(stderr,\
+  "(%s:%d) Unexpected operand types: %s and %s\n",\
+  __FILE__, __LINE__, sem_type_to_str((L)->type), sem_type_to_str((R)->type));
+
 static FILE *tr_out;
 
 /*----------------------------------------------------------------------------*/
@@ -12,9 +16,10 @@ static FILE *tr_out;
 static void tr_stat (u8 depth, AstNode *stat);
 static void tr_stat_print (u8 depth, AstNode *print);
 
-static void tr_expr (u8 depth, AstNode *expr);
-static void tr_expr_assign (u8 depth, AstNode *assign);
-static void tr_expr_id (u8 depth, AstNode *id);
+static void tr_expr (AstNode *expr);
+static void tr_expr_assign (AstNode *assign);
+static void tr_expr_add (AstNode *add);
+static void tr_expr_id (AstNode *id);
 
 static void tr_pointlit (AstNode *pointlit);
 static void tr_matrixlit (AstNode *matrixlit);
@@ -32,7 +37,7 @@ void tr_stat (u8 depth, AstNode *stat) {
   else if (stat->type == ast_PRINT) tr_stat_print(depth, stat);
   else { // Defaults to expressions.
     tfprintf(tr_out, depth, "");
-    tr_expr(depth, stat);
+    tr_expr(stat);
     fprintf(tr_out, ";\n");
   }
 }
@@ -49,16 +54,19 @@ void tr_stat_print (u8 depth, AstNode *print) {
   expr = ast_get_child_at(0, print);
 
   switch (expr->info->type) {
+
     case sem_POINT:
       tfprintf(tr_out, depth, "vi32_print(");
-      tr_expr(depth, expr);
+      tr_expr(expr);
       fprintf(tr_out, ");\n");
       break;
+
     case sem_MATRIX:
       tfprintf(tr_out, depth, "mi32_print(");
-      tr_expr(depth, expr);
+      tr_expr(expr);
       fprintf(tr_out, ");\n");
       break;
+
     default:
       has_translation_errors = 1;
       UNEXPECTED_SEM_TYPE(expr->info->type)
@@ -66,9 +74,10 @@ void tr_stat_print (u8 depth, AstNode *print) {
   }
 }
 
-void tr_expr (u8 depth, AstNode *expr) {
-  if (expr->type == ast_ASSIGN) tr_expr_assign(depth, expr);
-  else if (expr->type == ast_ID) tr_expr_id(depth, expr);
+void tr_expr (AstNode *expr) {
+  if (expr->type == ast_ASSIGN) tr_expr_assign(expr);
+  else if (expr->type == ast_ADD) tr_expr_add(expr);
+  else if (expr->type == ast_ID) tr_expr_id(expr);
   else if (expr->type == ast_POINTLIT) tr_pointlit(expr);
   else if (expr->type == ast_MATRIXLIT) tr_matrixlit(expr);
   else {
@@ -78,7 +87,7 @@ void tr_expr (u8 depth, AstNode *expr) {
   }
 }
 
-void tr_expr_assign (u8 depth, AstNode *assign) {
+void tr_expr_assign (AstNode *assign) {
   char *lhs_id;
   AstNode *rhs;
 
@@ -91,11 +100,44 @@ void tr_expr_assign (u8 depth, AstNode *assign) {
   lhs_id = (char*) assign->child->value;
   fprintf(tr_out, "%s = ", lhs_id);
   rhs = assign->child->sibling;
-  tr_expr(depth, rhs);
+  tr_expr(rhs);
   //TODO Warning: self assign
 }
 
-void tr_expr_id (u8 depth, AstNode *id) {
+void tr_expr_add (AstNode *add) {
+  AstNode *lhs, *rhs;
+
+  if (add->type != ast_ADD) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(add)
+    return;
+  }
+
+  lhs = ast_get_child_at(0, add);
+  rhs = ast_get_child_at(1, add);
+
+  if (lhs->info->type == sem_POINT && rhs->info->type == sem_POINT)
+    fprintf(tr_out, "vi32_add_vi32");
+  else if (lhs->info->type == sem_MATRIX && rhs->info->type == sem_MATRIX)
+    fprintf(tr_out, "mi32_add_mi32");
+  else {
+    has_translation_errors = 1;
+    UNEXPECTED_OPERANDS(lhs->info, rhs->info)
+    return;
+  }
+
+  fprintf(tr_out, "(");
+  //if (lhs->info->is_lvalue) fprintf(tr_out, "*");
+  fprintf(tr_out, "(");
+  tr_expr(lhs);
+  fprintf(tr_out, "), ");
+  //if (rhs->info->is_lvalue) fprintf(tr_out, "*");
+  fprintf(tr_out, "(");
+  tr_expr(rhs);
+  fprintf(tr_out, "))");
+}
+
+void tr_expr_id (AstNode *id) {
   char *id_str;
 
   if (id->type != ast_ID) {
@@ -207,7 +249,7 @@ void tr_init_vars (AstNode *program) {
 }
 
 void tr_init_point (AstNode *stat) {
-  AstNode *pointlit, *comp;
+  AstNode *expr;
   char *id;
 
   if (stat->type != ast_VARDECL) {
@@ -222,24 +264,19 @@ void tr_init_point (AstNode *stat) {
   }
 
   id = (char*) ast_get_child_at(1, stat)->value;
-  pointlit = ast_get_child_at(2, stat);
+  expr = ast_get_child_at(2, stat);
 
-  if (pointlit == NULL) {
+  if (expr == NULL) {
     tfprintf(tr_out, 1, "vi32_zero(&%s);\n", id);
   } else {
-    tfprintf(tr_out, 1, "vi32_set(&%s, ", id);
-    comp = pointlit->child;
-    while (comp != NULL) {
-      tr_intlit(comp);
-      if (comp->sibling == NULL) fprintf(tr_out, ", 1);\n");
-      else fprintf(tr_out, ", ");
-      comp = comp->sibling;
-    }
+    tfprintf(tr_out, 1, "vi32_set_vi32(&%s, ", id);
+    tr_expr(expr);
+    fprintf(tr_out, ");\n");
   }
 }
 
 void tr_init_matrix (AstNode *stat) {
-  AstNode *matrixlit, *comp;
+  AstNode *expr;
   char *id;
 
   if (stat->type != ast_VARDECL) {
@@ -254,19 +291,14 @@ void tr_init_matrix (AstNode *stat) {
   }
 
   id = (char*) ast_get_child_at(1, stat)->value;
-  matrixlit = ast_get_child_at(2, stat);
+  expr = ast_get_child_at(2, stat);
 
-  if (matrixlit == NULL) {
+  if (expr == NULL) {
     tfprintf(tr_out, 1, "mi32_identity(&%s);\n", id);
   } else {
-    tfprintf(tr_out, 1, "mi32_set(&%s, ", id);
-    comp = matrixlit->child;
-    while (comp != NULL) {
-      tr_intlit(comp);
-      if (comp->sibling == NULL) fprintf(tr_out, ");\n");
-      else fprintf(tr_out, ", ");
-      comp = comp->sibling;
-    }
+    tfprintf(tr_out, 1, "mi32_set_mi32(&%s, ", id);
+    tr_expr(expr);
+    fprintf(tr_out, ");\n");
   }
 }
 
