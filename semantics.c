@@ -71,6 +71,30 @@ static SemType can_add (SemType lhs, SemType rhs) {
   }
 }
 
+static SemType can_mult (SemType lhs, SemType rhs) {
+  switch (lhs) {
+
+    case sem_INT:
+      if (rhs == sem_INT) return sem_INT;
+      if (rhs == sem_MATRIX) return sem_MATRIX;
+      if (rhs == sem_POINT) return sem_POINT;
+      return sem_UNDEF;
+
+    case sem_MATRIX:
+      if (rhs == sem_INT) return sem_MATRIX;
+      if (rhs == sem_MATRIX) return sem_MATRIX;
+      if (rhs == sem_POINT) return sem_POINT;
+      return sem_UNDEF;
+
+    case sem_POINT:
+      if (rhs == sem_INT) return sem_POINT;
+      if (rhs == sem_MATRIX) return sem_POINT;
+      return sem_UNDEF;
+
+    case sem_UNDEF: return sem_UNDEF;
+  }
+}
+
 /*----------------------------------------------------------------------------*/
 
 static void check_stat (SymTab *tab, AstNode *stat);
@@ -80,6 +104,7 @@ static void check_stat_print (SymTab *tab, AstNode *print);
 static void check_expr (SemInfo *info, SymTab *tab, AstNode *expr);
 static void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
 static void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add);
+static void check_expr_mult (SemInfo *info, SymTab *tab, AstNode *mult);
 static void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id);
 
 static void check_matrixlit (SemInfo *info, AstNode *matrixlit);
@@ -163,12 +188,13 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
 }
 
 void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
-  if (expr->type == ast_ASSIGN) check_expr_assign(info, tab, expr);
-  else if (expr->type == ast_ADD) check_expr_add(info, tab, expr);
+       if (expr->type == ast_ADD) check_expr_add(info, tab, expr);
+  else if (expr->type == ast_ASSIGN) check_expr_assign(info, tab, expr);
   else if (expr->type == ast_ID) check_expr_id(info, tab, expr);
   else if (expr->type == ast_INTLIT) check_intlit(info, expr);
-  else if (expr->type == ast_POINTLIT) check_pointlit(info, expr);
   else if (expr->type == ast_MATRIXLIT) check_matrixlit(info, expr);
+  else if (expr->type == ast_MULT) check_expr_mult(info, tab, expr);
+  else if (expr->type == ast_POINTLIT) check_pointlit(info, expr);
   else {
     info->type = sem_UNDEF;
     UNEXPECTED_NODE(expr)
@@ -241,7 +267,7 @@ void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
     CONFLICT(
-      add->line, add->column, "=",
+      add->line, add->column, "+",
       sem_type_to_str(rhs_info.type), sem_type_to_str(lhs_info.type)
     )
   } else {
@@ -251,6 +277,49 @@ void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add) {
 
   add->info = sem_create_info(info->type, info->is_lvalue);
   if (add->info == NULL) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    FAILED_MALLOC
+    return;
+  }
+}
+
+void check_expr_mult (SemInfo *info, SymTab *tab, AstNode *mult) {
+  AstNode *lhs, *rhs;
+  SemInfo lhs_info, rhs_info;
+  SemType result_type;
+
+  if (mult->type != ast_MULT) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    UNEXPECTED_NODE(mult)
+    return;
+  }
+
+  // LHS
+  lhs = ast_get_child_at(0, mult);
+  check_expr(&lhs_info, tab, lhs);
+
+  // RHS
+  rhs = ast_get_child_at(1, mult);
+  check_expr(&rhs_info, tab, rhs);
+
+  result_type = can_mult(lhs_info.type, rhs_info.type);
+
+  if (result_type == sem_UNDEF) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    CONFLICT(
+      mult->line, mult->column, "*",
+      sem_type_to_str(rhs_info.type), sem_type_to_str(lhs_info.type)
+    )
+  } else {
+    info->type = result_type;
+    info->is_lvalue = FALSE;
+  }
+
+  mult->info = sem_create_info(info->type, info->is_lvalue);
+  if (mult->info == NULL) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
     FAILED_MALLOC

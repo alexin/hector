@@ -39,7 +39,7 @@ void sem_free (SemInfo *info);
 
 typedef enum ast_type {
   ast_ADD, ast_ASSIGN, ast_ID, ast_INT, ast_INTLIT, ast_MATRIX, ast_MATRIXLIT,
-  ast_POINT, ast_POINTLIT, ast_PRINT, ast_PROGRAM, ast_VARDECL
+  ast_MULT, ast_POINT, ast_POINTLIT, ast_PRINT, ast_PROGRAM, ast_VARDECL
 } AstType;
 
 const char* ast_type_to_str (AstType type);

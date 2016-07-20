@@ -47,6 +47,8 @@
 #define S43(M,I) (M)->comps[14] = (I);
 #define S44(M,I) (M)->comps[15] = (I);
 
+/*----------------------------------------------------------------------------*/
+
 void vi32_set_comps (vi32 *v, i32 x, i32 y, i32 z, i32 w) {
   SX(v,x) SY(v,y) SZ(v,z) SW(v,w);
 }
@@ -68,6 +70,8 @@ void vi32_zero (vi32 *v) {
 void vi32_print (vi32 v) {
   printf("(%d,%d,%d,%d)\n", GX(&v), GY(&v), GZ(&v), GW(&v));
 }
+
+/*----------------------------------------------------------------------------*/
 
 void mi32_set_comps (mi32 *m,
   i32 m11, i32 m12, i32 m13, i32 m14,
@@ -119,6 +123,8 @@ void mi32_print (mi32 m) {
   );
 }
 
+/*----------------------------------------------------------------------------*/
+
 vi32 vi32_add_vi32 (vi32 lhs, vi32 rhs) {
   vi32 v;
   vi32_set_comps(&v,
@@ -128,8 +134,67 @@ vi32 vi32_add_vi32 (vi32 lhs, vi32 rhs) {
 }
 
 mi32 mi32_add_mi32 (mi32 lhs, mi32 rhs) {
-  int i;
-  mi32 m;
+  int i; mi32 m;
   for (i=0; i < 16; i++) m.comps[i] = lhs.comps[i] + rhs.comps[i];
+  return m;
+}
+
+/*----------------------------------------------------------------------------*/
+
+vi32 vi32_mult_i32 (vi32 lhs, i32 rhs) {
+  int i; vi32 v;
+  for (i=0; i < 3; i++) v.comps[i] = lhs.comps[i] * rhs;
+  SW(&v, GW(&lhs));
+  return v;
+}
+
+mi32 mi32_mult_i32 (mi32 lhs, i32 rhs) {
+  int i; mi32 m;
+  for (i=0; i < 16; i++) m.comps[i] = lhs.comps[i] * rhs;
+  return m;
+}
+
+// post-multiplication
+vi32 mi32_mult_vi32 (mi32 lhs, vi32 rhs) {
+  vi32 v;
+  SX(&v, G11(&lhs)*GX(&rhs) + G12(&lhs)*GY(&rhs) + G13(&lhs)*GZ(&rhs) + G14(&lhs)*GW(&rhs))
+  SY(&v, G21(&lhs)*GX(&rhs) + G22(&lhs)*GY(&rhs) + G23(&lhs)*GZ(&rhs) + G24(&lhs)*GW(&rhs))
+  SZ(&v, G31(&lhs)*GX(&rhs) + G32(&lhs)*GY(&rhs) + G33(&lhs)*GZ(&rhs) + G34(&lhs)*GW(&rhs))
+  SW(&v, G41(&lhs)*GX(&rhs) + G42(&lhs)*GY(&rhs) + G43(&lhs)*GZ(&rhs) + G44(&lhs)*GW(&rhs))
+  return v;
+}
+
+// pre-multiplication
+vi32 vi32_mult_mi32 (vi32 lhs, mi32 rhs) {
+  vi32 v;
+  SX(&v, GX(&lhs)*G11(&rhs) + GY(&lhs)*G21(&rhs) + GZ(&lhs)*G31(&rhs) + GW(&lhs)*G41(&rhs))
+  SY(&v, GX(&lhs)*G12(&rhs) + GY(&lhs)*G22(&rhs) + GZ(&lhs)*G32(&rhs) + GW(&lhs)*G42(&rhs))
+  SZ(&v, GX(&lhs)*G13(&rhs) + GY(&lhs)*G23(&rhs) + GZ(&lhs)*G33(&rhs) + GW(&lhs)*G43(&rhs))
+  SW(&v, GX(&lhs)*G14(&rhs) + GY(&lhs)*G24(&rhs) + GZ(&lhs)*G34(&rhs) + GW(&lhs)*G44(&rhs))
+  return v;
+}
+
+mi32 mi32_mult_mi32 (mi32 lhs, mi32 rhs) {
+  mi32 m;
+  // row 1
+  S11(&m, G11(&lhs)*G11(&rhs) + G12(&lhs)*G21(&rhs) + G13(&lhs)*G31(&rhs) + G14(&lhs)*G41(&rhs))
+  S12(&m, G11(&lhs)*G12(&rhs) + G12(&lhs)*G22(&rhs) + G13(&lhs)*G32(&rhs) + G14(&lhs)*G42(&rhs))
+  S13(&m, G11(&lhs)*G13(&rhs) + G12(&lhs)*G23(&rhs) + G13(&lhs)*G33(&rhs) + G14(&lhs)*G43(&rhs))
+  S14(&m, G11(&lhs)*G14(&rhs) + G12(&lhs)*G24(&rhs) + G13(&lhs)*G34(&rhs) + G14(&lhs)*G44(&rhs))
+  // row 2
+  S21(&m, G21(&lhs)*G11(&rhs) + G22(&lhs)*G21(&rhs) + G23(&lhs)*G31(&rhs) + G24(&lhs)*G41(&rhs))
+  S22(&m, G21(&lhs)*G12(&rhs) + G22(&lhs)*G22(&rhs) + G23(&lhs)*G32(&rhs) + G24(&lhs)*G42(&rhs))
+  S23(&m, G21(&lhs)*G13(&rhs) + G22(&lhs)*G23(&rhs) + G23(&lhs)*G33(&rhs) + G24(&lhs)*G43(&rhs))
+  S24(&m, G21(&lhs)*G14(&rhs) + G22(&lhs)*G24(&rhs) + G23(&lhs)*G34(&rhs) + G24(&lhs)*G44(&rhs))
+  // row 3
+  S31(&m, G31(&lhs)*G11(&rhs) + G32(&lhs)*G21(&rhs) + G33(&lhs)*G31(&rhs) + G34(&lhs)*G41(&rhs))
+  S32(&m, G31(&lhs)*G12(&rhs) + G32(&lhs)*G22(&rhs) + G33(&lhs)*G32(&rhs) + G34(&lhs)*G42(&rhs))
+  S33(&m, G31(&lhs)*G13(&rhs) + G32(&lhs)*G23(&rhs) + G33(&lhs)*G33(&rhs) + G34(&lhs)*G43(&rhs))
+  S34(&m, G31(&lhs)*G14(&rhs) + G32(&lhs)*G24(&rhs) + G33(&lhs)*G34(&rhs) + G34(&lhs)*G44(&rhs))
+  // row 4
+  S41(&m, G41(&lhs)*G11(&rhs) + G42(&lhs)*G21(&rhs) + G43(&lhs)*G31(&rhs) + G44(&lhs)*G41(&rhs))
+  S42(&m, G41(&lhs)*G12(&rhs) + G42(&lhs)*G22(&rhs) + G43(&lhs)*G32(&rhs) + G44(&lhs)*G42(&rhs))
+  S43(&m, G41(&lhs)*G13(&rhs) + G42(&lhs)*G23(&rhs) + G43(&lhs)*G33(&rhs) + G44(&lhs)*G43(&rhs))
+  S44(&m, G41(&lhs)*G14(&rhs) + G42(&lhs)*G24(&rhs) + G43(&lhs)*G34(&rhs) + G44(&lhs)*G44(&rhs))
   return m;
 }

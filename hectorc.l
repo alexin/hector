@@ -51,6 +51,7 @@ floatlit                  [0-9]*\.?[0-9]+
 "["                       { IC; dbg_printf("OBRACKET\n"); return OBRACKET; }
 "]"                       { IC; dbg_printf("CBRACKET\n"); return CBRACKET; }
 "+"                       { IC; dbg_printf("PLUS\n"); return PLUS; }
+"*"                       { IC; dbg_printf("AST\n"); return AST; }
 
 "int"                     { IC; dbg_printf("INT\n"); return INT; }
 "point"                   { IC; dbg_printf("POINT\n"); return POINT; }

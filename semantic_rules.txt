@@ -2,13 +2,27 @@
 /*-- ADD ---------------------------------------------------------------------*/
 
 int + int     = int
-int + point   = undef
 int + matrix  = undex
-
-point + int     = undef
-point + point   = point
-point + matrix  = undef
+int + point   = undef
 
 matrix + int     = undef
-matrix + point   = undef
 matrix + matrix  = matrix
+matrix + point   = undef
+
+point + int     = undef
+point + matrix  = undef
+point + point   = point
+
+/*-- MULT --------------------------------------------------------------------*/
+
+int * int     = int
+int * matrix  = matrix
+int * point   = point
+
+matrix * int     = matrix
+matrix * matrix  = matrix
+matrix * point   = point
+
+point * int     = point
+point * matrix  = point
+point * point   = undef

@@ -36,6 +36,7 @@ static AstNode *ast;
 %type <v_node> Expr
 %type <v_node> AssignExpr
 %type <v_node> AddExpr
+%type <v_node> MultExpr
 %type <v_node> PrimaryExpr
 %type <v_node> Literal
 %type <v_node> PointLit
@@ -52,6 +53,7 @@ static AstNode *ast;
 
 %left EQUAL
 %left PLUS
+%left AST
 %left OBRACKET CBRACKET
 
 %start Program
@@ -258,6 +260,34 @@ AssignExpr
   ;
 
 AddExpr
+  : MultExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+
+  | AddExpr PLUS MultExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+      ast_free($3);
+    } else {
+      $$ = ast = ast_create_binary(ast_ADD, $1, $3);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        ast_free($1);
+        ast_free($3);
+      } else {
+        ast_set_location($$, @2.first_line, @2.first_column);
+      }
+    }
+  }
+  ;
+
+MultExpr
   : PrimaryExpr {
     if (has_syntax_errors) {
       $$ = NULL;
@@ -267,13 +297,13 @@ AddExpr
     }
   }
 
-  | AddExpr PLUS PrimaryExpr {
+  | MultExpr AST PrimaryExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
       ast_free($3);
     } else {
-      $$ = ast = ast_create_add($1, $3);
+      $$ = ast = ast_create_binary(ast_MULT, $1, $3);
       if($$ == NULL) {
         has_syntax_errors = 1;
         ast_free($1);

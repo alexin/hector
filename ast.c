@@ -14,8 +14,8 @@
 /*----------------------------------------------------------------------------*/
 
 static const char *ast_type_str[] = {
-  "ADD", "ASSIGN", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "POINT",
-  "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
+  "ADD", "ASSIGN", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "MULT",
+  "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
 };
 
 const char* ast_type_to_str (AstType type) {
@@ -92,6 +92,10 @@ void ast_print (AstNode *node, unsigned int depth) {
       break;
     case ast_MATRIXLIT:
       tprintf(depth, "MatrixLit");
+      ast_print_annotations(node);
+      break;
+    case ast_MULT:
+      tprintf(depth, "Mult");
       ast_print_annotations(node);
       break;
     case ast_POINT:
@@ -463,13 +467,18 @@ AstNode* ast_create_assign (char *id, AstNode *expr) {
   return node;
 }
 
-AstNode* ast_create_add (AstNode *lhs, AstNode *rhs) {
+AstNode* ast_create_binary (AstType op, AstNode *lhs, AstNode *rhs) {
   AstNode *node;
+
+  if (
+    op != ast_ADD &&
+    op != ast_MULT
+  ) return NULL;
 
   IFNULL(lhs)
   IFNULL(rhs)
 
-  node = ast_create_node(ast_ADD); IFNULL(node)
+  node = ast_create_node(op); IFNULL(node)
 
   lhs->sibling = rhs;
   node->child = lhs;
