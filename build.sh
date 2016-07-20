@@ -56,7 +56,7 @@ fi
 # Valgrind
 if [ ${cmdarg_cfg['valgrind']} ]; then
   hash valgrind 2>/dev/null || { echo >&2 "Valgrind not installed!"; exit 1; }
-  clang -g -O0 -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c symbols.c translation.c -o ${PROGRAM}
+  clang -g -O0 -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c symbols.c translation.c tr_binary_ops.c -o ${PROGRAM}
   echo "${VALGRIND_TEST}"
   valgrind --leak-check=yes ./${PROGRAM} ${VALGRIND_TEST}
   rm ${PROGRAM}
@@ -65,7 +65,7 @@ if [ ${cmdarg_cfg['valgrind']} ]; then
 fi
 
 # Program
-clang -g -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c symbols.c translation.c -o ${PROGRAM}
+clang -g -Wall -Wno-unused-function args.c ast.c hectorc.c hectorc.tab.c lex.yy.c semantics.c symbols.c translation.c tr_binary_ops.c -o ${PROGRAM}
 OK="$?"
 if [ ! "$OK" = "0" ]; then
   exit
