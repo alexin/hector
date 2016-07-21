@@ -23,7 +23,7 @@ typedef uint8_t u8;
 /*-- SEMANTICS ---------------------------------------------------------------*/
 
 typedef enum sem_type {
-  sem_INT, sem_MATRIX, sem_POINT, sem_UNDEF
+  sem_INT, sem_MATRIX, sem_POINT, sem_UNDEF, sem_VECTOR
 } SemType;
 
 const char* sem_type_to_str (SemType type);
@@ -40,7 +40,7 @@ void sem_free (SemInfo *info);
 typedef enum ast_type {
   ast_ADD, ast_ASSIGN, ast_ID, ast_INT, ast_INTLIT, ast_MATRIX, ast_MATRIXLIT,
   ast_MULT, ast_NEG, ast_POINT, ast_POINTLIT, ast_PRINT, ast_PROGRAM,
-  ast_VARDECL
+  ast_VARDECL, ast_VECTOR
 } AstType;
 
 const char* ast_type_to_str (AstType type);

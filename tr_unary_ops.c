@@ -26,6 +26,12 @@ void tr_expr_neg (FILE *out, AstNode *neg) {
     tr_expr(out, expr);
     fprintf(out, ")");
 
+  } else if (expr->info->type == sem_VECTOR) {
+    fprintf(out, "vi32_neg");
+    fprintf(out, "(");
+    tr_expr(out, expr);
+    fprintf(out, ")");
+
   } else {
     has_translation_errors = 1;
     UNEXPECTED_OPERAND(expr->info)

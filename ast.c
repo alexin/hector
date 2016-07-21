@@ -15,7 +15,7 @@
 
 static const char *ast_type_str[] = {
   "ADD", "ASSIGN", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "MULT", "NEG",
-  "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
+  "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL", "VECTOR"
 };
 
 const char* ast_type_to_str (AstType type) {
@@ -122,6 +122,10 @@ void ast_print (AstNode *node, unsigned int depth) {
       tprintf(depth, "VarDecl");
       ast_print_annotations(node);
       break;
+    case ast_VECTOR:
+      tprintf(depth, "Vector");
+      ast_print_annotations(node);
+      break;
 
     default:
       tprintf(
@@ -223,7 +227,8 @@ AstNode* ast_create_type (AstType type) {
   if (
     type != ast_INT &&
     type != ast_POINT &&
-    type != ast_MATRIX
+    type != ast_MATRIX &&
+    type != ast_VECTOR
   ) return NULL;
   node = ast_create_node(type);
   if (node == NULL) return NULL;

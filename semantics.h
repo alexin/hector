@@ -23,6 +23,7 @@ SemInfo* sem_create_info (SemType type, int lvalue);
 SemType can_negate (SemType type);
 
 SemType can_add (SemType lhs, SemType rhs);
+SemType can_assign (SemType lhs, SemType rhs);
 SemType can_mult (SemType lhs, SemType rhs);
 
 /*----------------------------------------------------------------------------*/

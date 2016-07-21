@@ -15,15 +15,14 @@
 #define INVALID_INTLIT(L,C,S) printf(\
   "Line %d, column %d: Invalid integer literal: %s\n", (L), (C), (S));
 
-
-#define CANT_ASSIGN(L,C,RHS,LHS) printf(\
-  "Line %d, column %d: Cannot assign %s to %s\n",\
-  (L), (C), (RHS), (LHS));
+#define BINARY_CONFLICT(L,C,O,LHS,RHS) printf(\
+  "Line %d, column %d: Operator %s cannot be applied to types %s and %s\n",\
+  (L), (C), (O), (LHS), (RHS));
 
 /*----------------------------------------------------------------------------*/
 
 static const char *sem_type_str[] = {
-  "INT", "MATRIX", "POINT", "UNDEF"
+  "INT", "MATRIX", "POINT", "UNDEF", "VECTOR"
 };
 
 const char* sem_type_to_str (SemType type) {
@@ -42,15 +41,6 @@ SemInfo* sem_create_info (SemType type, int lvalue) {
 void sem_free (SemInfo *info) {
   if (info == NULL) return;
   free(info);
-}
-
-static int is_assignable (SemType lhs, SemType rhs) {
-  switch (lhs) {
-    case sem_INT: return rhs == sem_INT;
-    case sem_MATRIX: return rhs == sem_MATRIX;
-    case sem_POINT: return rhs == sem_POINT;
-    case sem_UNDEF: return 0;
-  }
 }
 
 /*----------------------------------------------------------------------------*/
@@ -81,6 +71,7 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
   AstNode *type, *nid, *init;
   Symbol *sym;
   SemInfo info;
+  SemType result_type;
 
   if (decl->type != ast_VARDECL) {
     has_semantic_errors = 1;
@@ -104,6 +95,7 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
     if (type->type == ast_INT) sym_put(tab, sym_VAR, sem_INT, id);
     else if (type->type == ast_POINT) sym_put(tab, sym_VAR, sem_POINT, id);
     else if (type->type == ast_MATRIX) sym_put(tab, sym_VAR, sem_MATRIX, id);
+    else if (type->type == ast_VECTOR) sym_put(tab, sym_VAR, sem_VECTOR, id);
     else UNEXPECTED_NODE(type)
     sym = sym_get(tab, id);
   }
@@ -111,12 +103,14 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
   // Finally, we check the initializer.
   if (init != NULL) {
     check_expr(&info, tab, init);
-    if (!is_assignable(sym->sem_type, info.type)) {
+    result_type = can_assign(sym->sem_type, info.type);
+
+    if (result_type == sem_UNDEF || result_type != sym->sem_type) {
       has_semantic_errors = 1;
       info.type = sem_UNDEF;
-      CANT_ASSIGN(
-        decl->line, decl->column,
-        sem_type_to_str(info.type), sem_type_to_str(sym->sem_type)
+      BINARY_CONFLICT(
+        decl->line, decl->column, "=",
+        sem_type_to_str(sym->sem_type), sem_type_to_str(info.type)
       )
     }
   }
@@ -141,46 +135,6 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
   else {
     info->type = sem_UNDEF;
     UNEXPECTED_NODE(expr)
-  }
-}
-
-void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
-  AstNode *lhs, *rhs;
-  SemInfo lhs_info, rhs_info;
-
-  if (assign->type != ast_ASSIGN) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    UNEXPECTED_NODE(assign)
-    return;
-  }
-
-  // LHS
-  lhs = ast_get_child_at(0, assign);
-  check_expr_id(&lhs_info, tab, lhs);
-
-  // RHS
-  rhs = ast_get_child_at(1, assign);
-  check_expr(&rhs_info, tab, rhs);
-
-  if (!is_assignable(lhs_info.type, rhs_info.type)) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    CANT_ASSIGN(
-      assign->line, assign->column,
-      sem_type_to_str(rhs_info.type), sem_type_to_str(lhs_info.type)
-    )
-  } else {
-    info->type = lhs_info.type;
-    info->is_lvalue = TRUE;
-  }
-
-  assign->info = sem_create_info(info->type, info->is_lvalue);
-  if (assign->info == NULL) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    FAILED_MALLOC
-    return;
   }
 }
 

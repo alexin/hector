@@ -16,6 +16,7 @@ SemType can_negate (SemType type) {
     case sem_MATRIX: return sem_UNDEF;
     case sem_POINT: return sem_POINT;
     case sem_UNDEF: return sem_UNDEF;
+    case sem_VECTOR: return sem_VECTOR;
   }
 }
 

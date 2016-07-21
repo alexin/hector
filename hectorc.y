@@ -49,6 +49,8 @@ static AstNode *ast;
 %token INT
 %token POINT
 %token MATRIX
+%token VECTOR
+
 %token PRINT
 %token SEMI
 
@@ -148,6 +150,19 @@ Type
       $$ = NULL;
     } else {
       $$ = ast = ast_create_type(ast_MATRIX);
+      if ($$ == NULL) {
+        has_syntax_errors = 1;
+      } else {
+        ast_set_location($$, @1.first_line, @1.first_column);
+      }
+    }
+  }
+
+  | VECTOR {
+    if (has_syntax_errors) {
+      $$ = NULL;
+    } else {
+      $$ = ast = ast_create_type(ast_VECTOR);
       if ($$ == NULL) {
         has_syntax_errors = 1;
       } else {
