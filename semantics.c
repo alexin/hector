@@ -131,7 +131,7 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
   else if (expr->type == ast_MATRIXLIT) check_matrixlit(info, expr);
   else if (expr->type == ast_MULT) check_expr_mult(info, tab, expr);
   else if (expr->type == ast_NEG) check_expr_neg(info, tab, expr);
-  else if (expr->type == ast_POINTLIT) check_pointlit(info, expr);
+  else if (expr->type == ast_POINTLIT) check_pointlit(info, tab, expr);
   else {
     info->type = sem_UNDEF;
     UNEXPECTED_NODE(expr)
@@ -171,32 +171,37 @@ void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id) {
   }
 }
 
-void check_pointlit (SemInfo *info, AstNode *pointlit) {
-  AstNode *comps;
-  SemInfo comp_info;
+void check_intlit (SemInfo *info, AstNode *intlit) {
+  int ivalue;
+  char *svalue;
 
-  if (pointlit->type != ast_POINTLIT) {
+  if (intlit->type != ast_INTLIT) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
-    UNEXPECTED_NODE(pointlit)
+    UNEXPECTED_NODE(intlit)
     return;
   }
 
-  // We start by assuming this POINT is semantically correct...
-  info->type = sem_POINT;
-  info->is_lvalue = FALSE;
+  svalue = (char*) intlit->value;
 
-  //.. then we check the components, one by one.
-  comps = pointlit->child;
-  while (comps != NULL) {
-    check_intlit(&comp_info, comps);
-    // A single invalid component invalidates the whole POINT.
-    if (comp_info.type == sem_UNDEF) info->type = sem_UNDEF;
-    comps = comps->sibling;
+  // We reject integers with leading zeros.
+  if (strlen(svalue) > 1 && svalue[0] == '0') {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    INVALID_INTLIT(intlit->line, intlit->column, svalue)
+
+  // This is not an integer at all.
+  } else if (!parse_int(svalue, &ivalue)) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    INVALID_INTLIT(intlit->line, intlit->column, svalue)
+  } else {
+    info->type = sem_INT; // OK
+    info->is_lvalue = FALSE;
   }
 
-  pointlit->info = sem_create_info(info->type, info->is_lvalue);
-  if (pointlit->info == NULL) {
+  intlit->info = sem_create_info(info->type, info->is_lvalue);
+  if (intlit->info == NULL) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
     FAILED_MALLOC
@@ -237,37 +242,32 @@ void check_matrixlit (SemInfo *info, AstNode *matrixlit) {
   }
 }
 
-void check_intlit (SemInfo *info, AstNode *intlit) {
-  int ivalue;
-  char *svalue;
+void check_pointlit (SemInfo *info, SymTab *tab, AstNode *pointlit) {
+  AstNode *comp;
+  SemInfo comp_info;
 
-  if (intlit->type != ast_INTLIT) {
+  if (pointlit->type != ast_POINTLIT) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
-    UNEXPECTED_NODE(intlit)
+    UNEXPECTED_NODE(pointlit)
     return;
   }
 
-  svalue = (char*) intlit->value;
+  // We start by assuming this POINT is semantically correct...
+  info->type = sem_POINT;
+  info->is_lvalue = FALSE;
 
-  // We reject integers with leading zeros.
-  if (strlen(svalue) > 1 && svalue[0] == '0') {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    INVALID_INTLIT(intlit->line, intlit->column, svalue)
-
-  // This is not an integer at all.
-  } else if (!parse_int(svalue, &ivalue)) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    INVALID_INTLIT(intlit->line, intlit->column, svalue)
-  } else {
-    info->type = sem_INT; // OK
-    info->is_lvalue = FALSE;
+  //.. then we check the components, one by one.
+  comp = pointlit->child;
+  while (comp != NULL) {
+    check_expr(&comp_info, tab, comp);
+    // A single invalid component invalidates the whole POINT.
+    if (comp_info.type == sem_UNDEF) info->type = sem_UNDEF;
+    comp = comp->sibling;
   }
 
-  intlit->info = sem_create_info(info->type, info->is_lvalue);
-  if (intlit->info == NULL) {
+  pointlit->info = sem_create_info(info->type, info->is_lvalue);
+  if (pointlit->info == NULL) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
     FAILED_MALLOC

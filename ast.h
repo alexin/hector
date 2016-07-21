@@ -26,12 +26,7 @@ AstNode* ast_create_binary (AstType op, AstNode *lhs, AstNode *rhs);
 AstNode* ast_create_unary (AstType op, AstNode *expr);
 
 AstNode* ast_create_intlit (char *value);
-AstNode* ast_create_pointlit (char *x, char *y, char *z);
-AstNode* ast_create_matrixlit (
-  char *m11, char *m12, char *m13, char *m14,
-  char *m21, char *m22, char *m23, char *m24,
-  char *m31, char *m32, char *m33, char *m34,
-  char *m41, char *m42, char *m43, char *m44
-);
+AstNode* ast_create_pointlit (AstNode *comps);
+AstNode* ast_create_matrixlit (AstNode *comps);
 
 #endif//H_AST

@@ -253,196 +253,29 @@ AstNode* ast_create_intlit (char *value) {
   return node;
 }
 
-AstNode* ast_create_pointlit (char *x, char *y, char *z) {
-  AstNode *node, *nx, *ny, *nz;
+AstNode* ast_create_pointlit (AstNode *comps) {
+  AstNode *node;
 
-  IFNULL(x) IFNULL(y) IFNULL(z)
+  IFNULL(comps)
+  if (ast_count_siblings(comps) != 3) return NULL;
 
   node = ast_create_node(ast_POINTLIT);
   if (node == NULL) return NULL;
 
-  nx = ast_create_intlit(x);
-  if (nx == NULL) {
-    free(node);
-    return NULL;
-  }
-
-  ny = ast_create_intlit(y);
-  if (ny == NULL) {
-    free(nx);
-    free(node);
-    return NULL;
-  }
-
-  nz = ast_create_intlit(z);
-  if (nz == NULL) {
-    free(ny);
-    free(nx);
-    free(node);
-    return NULL;
-  }
-
-  ny->sibling = nz;
-  nx->sibling = ny;
-  node->child = nx;
-
+  node->child = comps;
   return node;
 }
 
-AstNode* ast_create_matrixlit (
-  char *m11, char *m12, char *m13, char *m14,
-  char *m21, char *m22, char *m23, char *m24,
-  char *m31, char *m32, char *m33, char *m34,
-  char *m41, char *m42, char *m43, char *m44
-) {
-  AstNode *node, *n11, *n12, *n13, *n14,
-                 *n21, *n22, *n23, *n24,
-                 *n31, *n32, *n33, *n34,
-                 *n41, *n42, *n43, *n44;
+AstNode* ast_create_matrixlit (AstNode *comps) {
+  AstNode *node;
 
-  IFNULL(m11) IFNULL(m12) IFNULL(m13) IFNULL(m14)
-  IFNULL(m21) IFNULL(m22) IFNULL(m23) IFNULL(m24)
-  IFNULL(m31) IFNULL(m32) IFNULL(m33) IFNULL(m34)
-  IFNULL(m41) IFNULL(m42) IFNULL(m43) IFNULL(m44)
+  IFNULL(comps)
+  if (ast_count_siblings(comps) != 16) return NULL;
 
   node = ast_create_node(ast_MATRIXLIT);
   if (node == NULL) return NULL;
 
-  // ROW 1
-  n11 = ast_create_intlit(m11);
-  if (n11 == NULL) {
-    free(node);
-    return NULL;
-  }
-  n12 = ast_create_intlit(m12);
-  if (n12 == NULL) {
-    free(n11);
-    free(node);
-    return NULL;
-  }
-  n13 = ast_create_intlit(m13);
-  if (n13 == NULL) {
-    free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n14 = ast_create_intlit(m14);
-  if (n14 == NULL) {
-    free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-
-  // ROW 2
-  n21 = ast_create_intlit(m21);
-  if (n21 == NULL) {
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n22 = ast_create_intlit(m22);
-  if (n22 == NULL) {
-                                     free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n23 = ast_create_intlit(m23);
-  if (n23 == NULL) {
-                          free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n24 = ast_create_intlit(m24);
-  if (n24 == NULL) {
-               free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-
-  // ROW 3
-  n31 = ast_create_intlit(m31);
-  if (n31 == NULL) {
-    free(n24); free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n32 = ast_create_intlit(m32);
-  if (n32 == NULL) {
-                                     free(n31);
-    free(n24); free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n33 = ast_create_intlit(m33);
-  if (n33 == NULL) {
-                          free(n32); free(n31);
-    free(n24); free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n34 = ast_create_intlit(m34);
-  if (n34 == NULL) {
-               free(n33); free(n32); free(n31);
-    free(n24); free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-
-  // ROW 4
-  n41 = ast_create_intlit(m41);
-  if (n41 == NULL) {
-    free(n34); free(n33); free(n32); free(n31);
-    free(n24); free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n42 = ast_create_intlit(m42);
-  if (n42 == NULL) {
-                                     free(n41);
-    free(n34); free(n33); free(n32); free(n31);
-    free(n24); free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n43 = ast_create_intlit(m43);
-  if (n43 == NULL) {
-                          free(n42); free(n41);
-    free(n34); free(n33); free(n32); free(n31);
-    free(n24); free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-  n44 = ast_create_intlit(m44);
-  if (n44 == NULL) {
-               free(n43); free(n42); free(n41);
-    free(n34); free(n33); free(n32); free(n31);
-    free(n24); free(n23); free(n22); free(n21);
-    free(n14); free(n13); free(n12); free(n11);
-    free(node);
-    return NULL;
-  }
-
-  //VALUE(n11,m11) VALUE(n12,m12) VALUE(n13,m13) VALUE(n14,m14)
-  //VALUE(n21,m21) VALUE(n22,m22) VALUE(n23,m23) VALUE(n24,m24)
-  //VALUE(n31,m31) VALUE(n32,m32) VALUE(n33,m33) VALUE(n34,m34)
-  //VALUE(n41,m41) VALUE(n42,m42) VALUE(n43,m43) VALUE(n44,m44)
-
-  SIBLING(n11,n12) SIBLING(n12,n13) SIBLING(n13,n14) SIBLING(n14,n21)
-  SIBLING(n21,n22) SIBLING(n22,n23) SIBLING(n23,n24) SIBLING(n24,n31)
-  SIBLING(n31,n32) SIBLING(n32,n33) SIBLING(n33,n34) SIBLING(n34,n41)
-  SIBLING(n41,n42) SIBLING(n42,n43) SIBLING(n43,n44)
-
-  node->child = n11;
+  node->child = comps;
 
   return node;
 }

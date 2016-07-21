@@ -33,6 +33,7 @@ static AstNode *ast;
 %type <v_node> Type
 %type <v_node> Stat
 %type <v_node> StatList
+%type <v_node> ExprList
 %type <v_node> Expr
 %type <v_node> AssignExpr
 %type <v_node> AddExpr
@@ -40,8 +41,7 @@ static AstNode *ast;
 %type <v_node> UnaryExpr
 %type <v_node> PrimaryExpr
 %type <v_node> Literal
-%type <v_node> PointLit
-%type <v_node> MatrixLit
+%type <v_node> IntLitList
 
 %token <v_str> ID
 %token <v_int> INTLIT
@@ -235,6 +235,32 @@ StatList
   }
   ;
 
+ExprList
+  : Expr ExprList {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+      ast_free($2);
+    } else {
+      $$ = ast = ast_add_sibling($1, $2);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        ast_free($1);
+        ast_free($2);
+      }
+    }
+  }
+
+  | Expr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+  ;
+
 Expr
   : AssignExpr {
     if (has_syntax_errors) {
@@ -399,16 +425,7 @@ Literal
     }
   }
 
-  | PointLit {
-    if (has_syntax_errors) {
-      $$ = NULL;
-      ast_free($1);
-    } else {
-      $$ = ast = $1;
-    }
-  }
-
-  | MatrixLit {
+  | IntLitList {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
@@ -418,69 +435,22 @@ Literal
   }
   ;
 
-PointLit
-  : OBRACKET INTLIT INTLIT INTLIT CBRACKET {
+IntLitList
+  : OBRACKET ExprList CBRACKET {
     if (has_syntax_errors) {
       $$ = NULL;
-      free($2);
-      free($3);
-      free($4);
+      ast_free($2);
     } else {
-      $$ = ast = ast_create_pointlit($2, $3, $4);
-      if($$ == NULL) {
-        has_syntax_errors = 1;
-        free($2);
-        free($3);
-        free($4);
-      } else {
-        ast_set_location($$->child, @2.first_line, @2.first_column);
-        ast_set_location($$->child->sibling, @3.first_line, @3.first_column);
-        ast_set_location(
-          $$->child->sibling->sibling, @4.first_line, @4.first_column
-        );
+      switch (ast_count_siblings($2)) {
+        case 3: $$ = ast = ast_create_pointlit($2); break;
+        case 16: $$ = ast = ast_create_matrixlit($2); break;
+        default: $$ = NULL;
       }
-    }
-  }
-  ;
-
-MatrixLit
-  : OBRACKET INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT INTLIT CBRACKET {
-    if (has_syntax_errors) {
-      $$ = NULL;
-      free($2 ); free($3 ); free($4 ); free($5 );
-      free($6 ); free($7 ); free($8 ); free($9 );
-      free($10); free($11); free($12); free($13);
-      free($14); free($15); free($16); free($17);
-    } else {
-      $$ = ast = ast_create_matrixlit(
-        $2, $3, $4, $5,
-        $6, $7, $8, $9,
-        $10, $11, $12, $13,
-        $14, $15, $16, $17
-      );
       if($$ == NULL) {
         has_syntax_errors = 1;
-        free($2 ); free($3 ); free($4 ); free($5 );
-        free($6 ); free($7 ); free($8 ); free($9 );
-        free($10); free($11); free($12); free($13);
-        free($14); free($15); free($16); free($17);
+        ast_free($2);
       } else {
-        ast_set_location(ast_get_child_at( 0, $$),  @2.first_line,  @2.first_column);
-        ast_set_location(ast_get_child_at( 1, $$),  @3.first_line,  @3.first_column);
-        ast_set_location(ast_get_child_at( 2, $$),  @4.first_line,  @4.first_column);
-        ast_set_location(ast_get_child_at( 3, $$),  @5.first_line,  @5.first_column);
-        ast_set_location(ast_get_child_at( 4, $$),  @6.first_line,  @6.first_column);
-        ast_set_location(ast_get_child_at( 5, $$),  @7.first_line,  @7.first_column);
-        ast_set_location(ast_get_child_at( 6, $$),  @8.first_line,  @8.first_column);
-        ast_set_location(ast_get_child_at( 7, $$),  @9.first_line,  @9.first_column);
-        ast_set_location(ast_get_child_at( 8, $$), @10.first_line, @10.first_column);
-        ast_set_location(ast_get_child_at( 9, $$), @11.first_line, @11.first_column);
-        ast_set_location(ast_get_child_at(10, $$), @12.first_line, @12.first_column);
-        ast_set_location(ast_get_child_at(11, $$), @13.first_line, @13.first_column);
-        ast_set_location(ast_get_child_at(12, $$), @14.first_line, @14.first_column);
-        ast_set_location(ast_get_child_at(13, $$), @15.first_line, @15.first_column);
-        ast_set_location(ast_get_child_at(14, $$), @16.first_line, @16.first_column);
-        ast_set_location(ast_get_child_at(15, $$), @17.first_line, @17.first_column);
+        ast_set_location($$, @1.first_line, @1.first_column);
       }
     }
   }

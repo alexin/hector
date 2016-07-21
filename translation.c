@@ -127,7 +127,7 @@ void tr_pointlit (AstNode *pointlit) {
   fprintf(tr_out, "vi32_from_comps(");
   comp = pointlit->child;
   while (comp != NULL) {
-    tr_intlit(comp);
+    tr_expr(tr_out, comp);
     if (comp->sibling == NULL) fprintf(tr_out, ", 1)");
     else fprintf(tr_out, ", ");
     comp = comp->sibling;

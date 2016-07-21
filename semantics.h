@@ -37,7 +37,7 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
 void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id);
 
 void check_matrixlit (SemInfo *info, AstNode *matrixlit);
-void check_pointlit (SemInfo *info, AstNode *pointlit);
+void check_pointlit (SemInfo *info, SymTab *tab, AstNode *pointlit);
 void check_intlit (SemInfo *info, AstNode *intlit);
 
 void check_expr_neg (SemInfo *info, SymTab *tab, AstNode *neg);
