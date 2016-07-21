@@ -23,6 +23,7 @@ AstNode* ast_create_print (AstNode *expr);
 AstNode* ast_create_id (char *id);
 AstNode* ast_create_assign (char *id, AstNode *expr);
 AstNode* ast_create_binary (AstType op, AstNode *lhs, AstNode *rhs);
+AstNode* ast_create_unary (AstType op, AstNode *expr);
 
 AstNode* ast_create_intlit (char *value);
 AstNode* ast_create_pointlit (char *x, char *y, char *z);

@@ -37,6 +37,7 @@ static AstNode *ast;
 %type <v_node> AssignExpr
 %type <v_node> AddExpr
 %type <v_node> MultExpr
+%type <v_node> UnaryExpr
 %type <v_node> PrimaryExpr
 %type <v_node> Literal
 %type <v_node> PointLit
@@ -52,7 +53,7 @@ static AstNode *ast;
 %token SEMI
 
 %left EQUAL
-%left PLUS
+%left PLUS MINUS
 %left AST
 %left OBRACKET CBRACKET
 
@@ -288,7 +289,7 @@ AddExpr
   ;
 
 MultExpr
-  : PrimaryExpr {
+  : UnaryExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
@@ -297,7 +298,7 @@ MultExpr
     }
   }
 
-  | MultExpr AST PrimaryExpr {
+  | MultExpr AST UnaryExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
@@ -310,6 +311,32 @@ MultExpr
         ast_free($3);
       } else {
         ast_set_location($$, @2.first_line, @2.first_column);
+      }
+    }
+  }
+  ;
+
+UnaryExpr
+  : PrimaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+
+  | MINUS UnaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($2);
+    } else {
+      $$ = ast = ast_create_unary(ast_NEG, $2);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        ast_free($2);
+      } else {
+        ast_set_location($$, @1.first_line, @1.first_column);
       }
     }
   }

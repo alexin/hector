@@ -92,6 +92,7 @@ void tr_expr (FILE *out, AstNode *expr) {
   else if (expr->type == ast_INTLIT) tr_intlit(expr);
   else if (expr->type == ast_MATRIXLIT) tr_matrixlit(expr);
   else if (expr->type == ast_MULT) tr_expr_mult(tr_out, expr);
+  else if (expr->type == ast_NEG) tr_expr_neg(tr_out, expr);
   else if (expr->type == ast_POINTLIT) tr_pointlit(expr);
   else {
     has_translation_errors = 1;
@@ -116,140 +117,6 @@ void tr_expr_assign (AstNode *assign) {
   tr_expr(tr_out, rhs);
   //TODO Warning: self assign
 }
-
-/*void tr_expr_add (AstNode *add) {
-  AstNode *lhs, *rhs;
-
-  if (add->type != ast_ADD) {
-    has_translation_errors = 1;
-    UNEXPECTED_NODE(add)
-    return;
-  }
-
-  lhs = ast_get_child_at(0, add);
-  rhs = ast_get_child_at(1, add);
-
-  if (lhs->info->type == sem_INT && rhs->info->type == sem_INT) {
-    fprintf(tr_out, "");
-    tr_expr(lhs);
-    fprintf(tr_out, " + ");
-    tr_expr(rhs);
-    fprintf(tr_out, "");
-
-  } else if (lhs->info->type == sem_POINT && rhs->info->type == sem_POINT) {
-    fprintf(tr_out, "vi32_add_vi32");
-    fprintf(tr_out, "((");
-    tr_expr(lhs);
-    fprintf(tr_out, "), ");
-    fprintf(tr_out, "(");
-    tr_expr(rhs);
-    fprintf(tr_out, "))");
-
-  } else if (lhs->info->type == sem_MATRIX && rhs->info->type == sem_MATRIX) {
-    fprintf(tr_out, "mi32_add_mi32");
-    fprintf(tr_out, "((");
-    tr_expr(lhs);
-    fprintf(tr_out, "), ");
-    fprintf(tr_out, "(");
-    tr_expr(rhs);
-    fprintf(tr_out, "))");
-
-  } else {
-    has_translation_errors = 1;
-    UNEXPECTED_OPERANDS(lhs->info, rhs->info)
-    return;
-  }
-}
-
-void tr_expr_mult (AstNode *mult) {
-  AstNode *lhs, *rhs;
-
-  if (mult->type != ast_MULT) {
-    has_translation_errors = 1;
-    UNEXPECTED_NODE(mult)
-    return;
-  }
-
-  lhs = ast_get_child_at(0, mult);
-  rhs = ast_get_child_at(1, mult);
-
-  // int * int
-  if (lhs->info->type == sem_INT && rhs->info->type == sem_INT) {
-    fprintf(tr_out, "");
-    tr_expr(lhs);
-    fprintf(tr_out, " * ");
-    tr_expr(rhs);
-    fprintf(tr_out, "");
-
-  // int * point
-  } else if (lhs->info->type == sem_INT && rhs->info->type == sem_POINT) {
-    fprintf(tr_out, "vi32_mult_i32");
-    fprintf(tr_out, "(");
-    tr_expr(rhs);
-    fprintf(tr_out, ", ");
-    tr_expr(lhs);
-    fprintf(tr_out, ")");
-
-  // int * matrix
-  } else if (lhs->info->type == sem_INT && rhs->info->type == sem_MATRIX) {
-    fprintf(tr_out, "mi32_mult_i32");
-    fprintf(tr_out, "(");
-    tr_expr(rhs);
-    fprintf(tr_out, ", ");
-    tr_expr(lhs);
-    fprintf(tr_out, ")");
-
-  // point * int
-  } else if (lhs->info->type == sem_POINT && rhs->info->type == sem_INT) {
-    fprintf(tr_out, "vi32_mult_i32");
-    fprintf(tr_out, "(");
-    tr_expr(lhs);
-    fprintf(tr_out, ", ");
-    tr_expr(rhs);
-    fprintf(tr_out, ")");
-
-  // point * matrix
-  } else if (lhs->info->type == sem_POINT && rhs->info->type == sem_MATRIX) {
-    fprintf(tr_out, "vi32_mult_mi32");
-    fprintf(tr_out, "(");
-    tr_expr(lhs);
-    fprintf(tr_out, ", ");
-    tr_expr(rhs);
-    fprintf(tr_out, ")");
-
-  // matrix * int
-  } else if (lhs->info->type == sem_MATRIX && rhs->info->type == sem_INT) {
-    fprintf(tr_out, "mi32_mult_i32");
-    fprintf(tr_out, "(");
-    tr_expr(lhs);
-    fprintf(tr_out, ", ");
-    tr_expr(rhs);
-    fprintf(tr_out, ")");
-
-  // matrix * point
-  } else if (lhs->info->type == sem_MATRIX && rhs->info->type == sem_POINT) {
-    fprintf(tr_out, "mi32_mult_vi32");
-    fprintf(tr_out, "(");
-    tr_expr(lhs);
-    fprintf(tr_out, ", ");
-    tr_expr(rhs);
-    fprintf(tr_out, ")");
-
-  // matrix * matrix
-  } else if (lhs->info->type == sem_MATRIX && rhs->info->type == sem_MATRIX) {
-    fprintf(tr_out, "mi32_mult_mi32");
-    fprintf(tr_out, "(");
-    tr_expr(lhs);
-    fprintf(tr_out, ", ");
-    tr_expr(rhs);
-    fprintf(tr_out, ")");
-
-  } else {
-    has_translation_errors = 1;
-    UNEXPECTED_OPERANDS(lhs->info, rhs->info)
-    return;
-  }
-}*/
 
 void tr_expr_id (AstNode *id) {
   char *id_str;

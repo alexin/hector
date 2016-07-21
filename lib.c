@@ -125,11 +125,19 @@ void mi32_print (mi32 m) {
 
 /*----------------------------------------------------------------------------*/
 
+vi32 vi32_neg (vi32 v) {
+  int i; vi32 v2;
+  for (i=0; i < 3; i++) v2.comps[i] = -v.comps[i];
+  SW(&v2, 1);
+  return v2;
+}
+
+/*----------------------------------------------------------------------------*/
+
 vi32 vi32_add_vi32 (vi32 lhs, vi32 rhs) {
-  vi32 v;
-  vi32_set_comps(&v,
-    GX(&lhs)+GX(&rhs), GY(&lhs)+GY(&rhs), GZ(&lhs)+GZ(&rhs), 1
-  );
+  int i; vi32 v;
+  for (i=0; i < 3; i++) v.comps[i] = lhs.comps[i] + rhs.comps[i];
+  SW(&v, 1);
   return v;
 }
 

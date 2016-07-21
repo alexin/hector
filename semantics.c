@@ -15,9 +15,10 @@
 #define INVALID_INTLIT(L,C,S) printf(\
   "Line %d, column %d: Invalid integer literal: %s\n", (L), (C), (S));
 
-#define CONFLICT(L,C,O,RHS,LHS) printf(\
-  "Line %d, column %d: Operator %s cannot be applied to types %s and %s\n",\
-  (L), (C), (O), (LHS), (RHS));
+
+#define CANT_ASSIGN(L,C,RHS,LHS) printf(\
+  "Line %d, column %d: Cannot assign %s to %s\n",\
+  (L), (C), (RHS), (LHS));
 
 /*----------------------------------------------------------------------------*/
 
@@ -29,7 +30,7 @@ const char* sem_type_to_str (SemType type) {
   return sem_type_str[type];
 }
 
-static SemInfo* sem_create_info (SemType type, int lvalue) {
+SemInfo* sem_create_info (SemType type, int lvalue) {
   SemInfo *info;
   info = (SemInfo*) malloc(sizeof(SemInfo));
   if (info == NULL) return NULL;
@@ -51,65 +52,6 @@ static int is_assignable (SemType lhs, SemType rhs) {
     case sem_UNDEF: return 0;
   }
 }
-
-static SemType can_add (SemType lhs, SemType rhs) {
-  switch (lhs) {
-
-    case sem_INT:
-      if (rhs == sem_INT) return sem_INT;
-      return sem_UNDEF;
-
-    case sem_MATRIX:
-      if (rhs == sem_MATRIX) return sem_MATRIX;
-      return sem_UNDEF;
-
-    case sem_POINT:
-      if (rhs == sem_POINT) return sem_POINT;
-      return sem_UNDEF;
-
-    case sem_UNDEF: return sem_UNDEF;
-  }
-}
-
-static SemType can_mult (SemType lhs, SemType rhs) {
-  switch (lhs) {
-
-    case sem_INT:
-      if (rhs == sem_INT) return sem_INT;
-      if (rhs == sem_MATRIX) return sem_MATRIX;
-      if (rhs == sem_POINT) return sem_POINT;
-      return sem_UNDEF;
-
-    case sem_MATRIX:
-      if (rhs == sem_INT) return sem_MATRIX;
-      if (rhs == sem_MATRIX) return sem_MATRIX;
-      if (rhs == sem_POINT) return sem_POINT;
-      return sem_UNDEF;
-
-    case sem_POINT:
-      if (rhs == sem_INT) return sem_POINT;
-      if (rhs == sem_MATRIX) return sem_POINT;
-      return sem_UNDEF;
-
-    case sem_UNDEF: return sem_UNDEF;
-  }
-}
-
-/*----------------------------------------------------------------------------*/
-
-static void check_stat (SymTab *tab, AstNode *stat);
-static void check_stat_vardecl (SymTab *tab, AstNode *decl);
-static void check_stat_print (SymTab *tab, AstNode *print);
-
-static void check_expr (SemInfo *info, SymTab *tab, AstNode *expr);
-static void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
-static void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add);
-static void check_expr_mult (SemInfo *info, SymTab *tab, AstNode *mult);
-static void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id);
-
-static void check_matrixlit (SemInfo *info, AstNode *matrixlit);
-static void check_pointlit (SemInfo *info, AstNode *pointlit);
-static void check_intlit (SemInfo *info, AstNode *intlit);
 
 /*----------------------------------------------------------------------------*/
 
@@ -172,8 +114,8 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
     if (!is_assignable(sym->sem_type, info.type)) {
       has_semantic_errors = 1;
       info.type = sem_UNDEF;
-      CONFLICT(
-        decl->line, decl->column, "=",
+      CANT_ASSIGN(
+        decl->line, decl->column,
         sem_type_to_str(info.type), sem_type_to_str(sym->sem_type)
       )
     }
@@ -194,6 +136,7 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
   else if (expr->type == ast_INTLIT) check_intlit(info, expr);
   else if (expr->type == ast_MATRIXLIT) check_matrixlit(info, expr);
   else if (expr->type == ast_MULT) check_expr_mult(info, tab, expr);
+  else if (expr->type == ast_NEG) check_expr_neg(info, tab, expr);
   else if (expr->type == ast_POINTLIT) check_pointlit(info, expr);
   else {
     info->type = sem_UNDEF;
@@ -223,8 +166,8 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
   if (!is_assignable(lhs_info.type, rhs_info.type)) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
-    CONFLICT(
-      assign->line, assign->column, "=",
+    CANT_ASSIGN(
+      assign->line, assign->column,
       sem_type_to_str(rhs_info.type), sem_type_to_str(lhs_info.type)
     )
   } else {
@@ -234,92 +177,6 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
 
   assign->info = sem_create_info(info->type, info->is_lvalue);
   if (assign->info == NULL) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    FAILED_MALLOC
-    return;
-  }
-}
-
-void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add) {
-  AstNode *lhs, *rhs;
-  SemInfo lhs_info, rhs_info;
-  SemType result_type;
-
-  if (add->type != ast_ADD) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    UNEXPECTED_NODE(add)
-    return;
-  }
-
-  // LHS
-  lhs = ast_get_child_at(0, add);
-  check_expr(&lhs_info, tab, lhs);
-
-  // RHS
-  rhs = ast_get_child_at(1, add);
-  check_expr(&rhs_info, tab, rhs);
-
-  result_type = can_add(lhs_info.type, rhs_info.type);
-
-  if (result_type == sem_UNDEF) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    CONFLICT(
-      add->line, add->column, "+",
-      sem_type_to_str(rhs_info.type), sem_type_to_str(lhs_info.type)
-    )
-  } else {
-    info->type = result_type;
-    info->is_lvalue = FALSE;
-  }
-
-  add->info = sem_create_info(info->type, info->is_lvalue);
-  if (add->info == NULL) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    FAILED_MALLOC
-    return;
-  }
-}
-
-void check_expr_mult (SemInfo *info, SymTab *tab, AstNode *mult) {
-  AstNode *lhs, *rhs;
-  SemInfo lhs_info, rhs_info;
-  SemType result_type;
-
-  if (mult->type != ast_MULT) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    UNEXPECTED_NODE(mult)
-    return;
-  }
-
-  // LHS
-  lhs = ast_get_child_at(0, mult);
-  check_expr(&lhs_info, tab, lhs);
-
-  // RHS
-  rhs = ast_get_child_at(1, mult);
-  check_expr(&rhs_info, tab, rhs);
-
-  result_type = can_mult(lhs_info.type, rhs_info.type);
-
-  if (result_type == sem_UNDEF) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    CONFLICT(
-      mult->line, mult->column, "*",
-      sem_type_to_str(rhs_info.type), sem_type_to_str(lhs_info.type)
-    )
-  } else {
-    info->type = result_type;
-    info->is_lvalue = FALSE;
-  }
-
-  mult->info = sem_create_info(info->type, info->is_lvalue);
-  if (mult->info == NULL) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
     FAILED_MALLOC

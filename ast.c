@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 
 static const char *ast_type_str[] = {
-  "ADD", "ASSIGN", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "MULT",
+  "ADD", "ASSIGN", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "MULT", "NEG",
   "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL"
 };
 
@@ -96,6 +96,10 @@ void ast_print (AstNode *node, unsigned int depth) {
       break;
     case ast_MULT:
       tprintf(depth, "Mult");
+      ast_print_annotations(node);
+      break;
+    case ast_NEG:
+      tprintf(depth, "Neg");
       ast_print_annotations(node);
       break;
     case ast_POINT:
@@ -483,5 +487,16 @@ AstNode* ast_create_binary (AstType op, AstNode *lhs, AstNode *rhs) {
   lhs->sibling = rhs;
   node->child = lhs;
 
+  return node;
+}
+
+AstNode* ast_create_unary (AstType op, AstNode *expr) {
+  AstNode *node;
+  if (
+    op != ast_NEG
+  ) return NULL;
+  IFNULL(expr)
+  node = ast_create_node(op); IFNULL(node)
+  node->child = expr;
   return node;
 }
