@@ -7,4 +7,3 @@ Compiler for training purposes.
   semantic meaning of the original statements.
   Break down the statements into blocks, each with their own local assignments.
 - Transform points and vector differently.
-- INTLIT inside a MATRIXLIT can't be negative.

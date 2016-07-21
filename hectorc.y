@@ -39,6 +39,7 @@ static AstNode *ast;
 %type <v_node> AddExpr
 %type <v_node> MultExpr
 %type <v_node> UnaryExpr
+%type <v_node> PrefixExpr
 %type <v_node> PrimaryExpr
 %type <v_node> Literal
 %type <v_node> IntLitList
@@ -54,9 +55,10 @@ static AstNode *ast;
 %token PRINT
 %token SEMI
 
-%left EQUAL
+%right EQUAL
 %left PLUS MINUS
 %left AST
+%right AT
 %left OBRACKET CBRACKET
 
 %start Program
@@ -358,7 +360,7 @@ MultExpr
   ;
 
 UnaryExpr
-  : PrimaryExpr {
+  : PrefixExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
@@ -378,6 +380,35 @@ UnaryExpr
         ast_free($2);
       } else {
         ast_set_location($$, @1.first_line, @1.first_column);
+      }
+    }
+  }
+  ;
+
+PrefixExpr
+  : PrimaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+
+  | ID AT PrefixExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      free($1);
+      ast_free($3);
+    } else {
+      $$ = ast = ast_create_at($1, $3);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        free($1);
+        ast_free($3);
+      } else {
+        ast_set_location($$, @2.first_line, @2.first_column);
+        ast_set_location($$->child, @1.first_line, @1.first_column);
       }
     }
   }

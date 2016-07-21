@@ -14,8 +14,8 @@
 /*----------------------------------------------------------------------------*/
 
 static const char *ast_type_str[] = {
-  "ADD", "ASSIGN", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "MULT", "NEG",
-  "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL", "VECTOR"
+  "ADD", "ASSIGN", "AT", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "MULT",
+  "NEG", "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL", "VECTOR"
 };
 
 const char* ast_type_to_str (AstType type) {
@@ -72,6 +72,10 @@ void ast_print (AstNode *node, unsigned int depth) {
       break;
     case ast_ASSIGN:
       tprintf(depth, "Assign");
+      ast_print_annotations(node);
+      break;
+    case ast_AT:
+      tprintf(depth, "At");
       ast_print_annotations(node);
       break;
     case ast_ID:
@@ -336,5 +340,25 @@ AstNode* ast_create_unary (AstType op, AstNode *expr) {
   IFNULL(expr)
   node = ast_create_node(op); IFNULL(node)
   node->child = expr;
+  return node;
+}
+
+AstNode* ast_create_at (char *id, AstNode *target) {
+  AstNode *node, *nid;
+
+  IFNULL(id)
+  IFNULL(target)
+
+  node = ast_create_node(ast_AT); IFNULL(node)
+
+  nid = ast_create_id(id);
+  if (nid == NULL) {
+    free(node);
+    return NULL;
+  }
+
+  nid->sibling = target;
+  node->child = nid;
+
   return node;
 }

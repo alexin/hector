@@ -47,12 +47,14 @@ floatlit                  [0-9]*\.?[0-9]+
 {intlit}                  { IC; on_intlit(); return INTLIT; }
 
 ";"                       { IC; dbg_printf("SEMI\n"); return SEMI; }
-"="                       { IC; dbg_printf("EQUAL\n"); return EQUAL; }
 "["                       { IC; dbg_printf("OBRACKET\n"); return OBRACKET; }
 "]"                       { IC; dbg_printf("CBRACKET\n"); return CBRACKET; }
+
+"="                       { IC; dbg_printf("EQUAL\n"); return EQUAL; }
 "+"                       { IC; dbg_printf("PLUS\n"); return PLUS; }
 "-"                       { IC; dbg_printf("MINUS\n"); return MINUS; }
 "*"                       { IC; dbg_printf("AST\n"); return AST; }
+"@"                       { IC; dbg_printf("AT\n"); return AT; }
 
 "int"                     { IC; dbg_printf("INT\n"); return INT; }
 "point"                   { IC; dbg_printf("POINT\n"); return POINT; }
