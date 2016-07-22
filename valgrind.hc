@@ -1,3 +1,2 @@
-int i = 6;
-int j;
-j = i = 7;
+matrix m;
+print 11@m;

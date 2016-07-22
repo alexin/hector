@@ -19,6 +19,37 @@
   "Line %d, column %d: Operator %s cannot be applied to types %s and %s\n",\
   (L), (C), (O), (LHS), (RHS));
 
+#define INV_TARGET_TYPE(L,C,T) printf(\
+  "Line %d, column %d: Operator @ cannot be applied to type %s\n",\
+  (L), (C), sem_type_to_str(T));
+
+#define NOT_ATTR(L,C,A,T) printf(\
+  "Line %d, column %d: %s is not an attribute of %s\n",\
+  (L), (C), (A), sem_type_to_str(T));
+
+static const char *matrix_attrs[] = {
+  "11", "12", "13", "14",
+  "21", "22", "23", "24",
+  "31", "32", "33", "34",
+  "41", "42", "43", "44"
+};
+
+static int is_matrix_attribute (const char *attr) {
+  int i;
+  for (i=0; i < 16; i++)
+    if (strcmp(attr, matrix_attrs[i]) == 0) return TRUE;
+  return FALSE;
+}
+
+static const char *point_attrs[] = {"x", "y", "z"};
+
+static int is_point_attribute (const char *attr) {
+  int i;
+  for (i=0; i < 3; i++)
+    if (strcmp(attr, point_attrs[i]) == 0) return TRUE;
+  return FALSE;
+}
+
 /*----------------------------------------------------------------------------*/
 
 static const char *sem_type_str[] = {
@@ -126,6 +157,7 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl) {
 void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
        if (expr->type == ast_ADD) check_expr_add(info, tab, expr);
   else if (expr->type == ast_ASSIGN) check_expr_assign(info, tab, expr);
+  else if (expr->type == ast_AT) check_expr_at(info, tab, expr);
   else if (expr->type == ast_ID) check_expr_id(info, tab, expr);
   else if (expr->type == ast_INTLIT) check_intlit(info, expr);
   else if (expr->type == ast_MATRIXLIT) check_matrixlit(info, expr);
@@ -164,6 +196,69 @@ void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id) {
 
   id->info = sem_create_info(info->type, info->is_lvalue);
   if (id->info == NULL) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    FAILED_MALLOC
+    return;
+  }
+}
+
+void check_expr_at (SemInfo *info, SymTab *tab, AstNode *at) {
+  char *attr_id, *target_id;
+  AstNode *target;
+  SemInfo target_info;
+
+  if (at->type != ast_AT) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    UNEXPECTED_NODE(at)
+    return;
+  }
+
+  attr_id = (char*) ast_get_child_at(0, at)->value;
+  target = ast_get_child_at(1, at);
+
+  if (target->type != ast_ID) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    UNEXPECTED_NODE(target)
+  }
+
+  target_id = (char*) target->value;
+  check_expr(&target_info, tab, target);
+
+  switch (target_info.type) {
+
+    case sem_MATRIX:
+      if (is_matrix_attribute(attr_id)) {
+        info->type = sem_INT;
+        info->is_lvalue = FALSE;
+      } else {
+        has_semantic_errors = 1;
+        info->type = sem_UNDEF;
+        NOT_ATTR(at->line, at->column, attr_id, target_info.type)
+      }
+      break;
+
+    case sem_POINT:
+      if (is_point_attribute(attr_id)) {
+        info->type = sem_INT;
+        info->is_lvalue = FALSE;
+      } else {
+        has_semantic_errors = 1;
+        info->type = sem_UNDEF;
+        NOT_ATTR(at->line, at->column, attr_id, target_info.type)
+      }
+      break;
+
+    default:
+      has_semantic_errors = 1;
+      info->type = sem_UNDEF;
+      INV_TARGET_TYPE(at->line, at->column, target_info.type)
+  }
+
+  at->info = sem_create_info(info->type, info->is_lvalue);
+  if (at->info == NULL) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
     FAILED_MALLOC

@@ -2,12 +2,36 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "hectorc.h"
 
 #define UNEXPECTED_OPERANDS(L,R) fprintf(stderr,\
   "(%s:%d) Unexpected operand types: %s and %s\n",\
   __FILE__, __LINE__, sem_type_to_str((L)->type), sem_type_to_str((R)->type));
+
+static const char *matrix_attrs[] = {
+  "11", "12", "13", "14",
+  "21", "22", "23", "24",
+  "31", "32", "33", "34",
+  "41", "42", "43", "44"
+};
+
+static int get_matrix_attr_index (const char *attr) {
+  int i;
+  for (i=0; i < 16; i++)
+    if (strcmp(attr, matrix_attrs[i]) == 0) return i;
+  return -1;
+}
+
+static const char *point_attrs[] = {"x", "y", "z"};
+
+static int get_point_attr_index (const char *attr) {
+  int i;
+  for (i=0; i < 3; i++)
+    if (strcmp(attr, point_attrs[i]) == 0) return i;
+  return -1;
+}
 
 static FILE *tr_out;
 
@@ -17,6 +41,7 @@ static void tr_stat (u8 depth, AstNode *stat);
 static void tr_stat_print (u8 depth, AstNode *print);
 
 static void tr_expr_id (AstNode *id);
+static void tr_expr_at (AstNode *at);
 
 static void tr_pointlit (AstNode *pointlit);
 static void tr_matrixlit (AstNode *matrixlit);
@@ -88,6 +113,7 @@ void tr_stat_print (u8 depth, AstNode *print) {
 void tr_expr (FILE *out, AstNode *expr) {
        if (expr->type == ast_ADD) tr_expr_add(tr_out, expr);
   else if (expr->type == ast_ASSIGN) tr_expr_assign(tr_out, expr);
+  else if (expr->type == ast_AT) tr_expr_at(expr);
   else if (expr->type == ast_ID) tr_expr_id(expr);
   else if (expr->type == ast_INTLIT) tr_intlit(expr);
   else if (expr->type == ast_MATRIXLIT) tr_matrixlit(expr);
@@ -113,6 +139,51 @@ void tr_expr_id (AstNode *id) {
   id_str = (char*) id->value;
   fprintf(tr_out, "%s", id_str);
   //TODO Trigger a warning when used as a statement.
+}
+
+void tr_expr_at (AstNode *at) {
+  char *target_id, *attr_id;
+  AstNode *target;
+  int attr_index;
+
+  if (at->type != ast_AT) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(at)
+    return;
+  }
+
+  attr_id = (char*) ast_get_child_at(0, at)->value;
+  target = ast_get_child_at(1, at);
+  target_id = (char*) target->value;
+
+  switch (target->info->type) {
+    case sem_MATRIX:
+      attr_index = get_matrix_attr_index(attr_id);
+      break;
+
+    case sem_POINT:
+      attr_index = get_point_attr_index(attr_id);
+      break;
+
+    default:
+      has_translation_errors = 1;
+      fprintf(stderr,
+        "(%s:%d) Unexpected target types %s\n",
+        __FILE__, __LINE__, sem_type_to_str(target->info->type)
+      );
+      return;
+  }
+
+  if (attr_index < 0) {
+    has_translation_errors = 1;
+    fprintf(stderr,
+      "(%s:%d) Invalid attribute: %s\n",
+      __FILE__, __LINE__, attr_id
+    );
+    return;
+  }
+
+  fprintf(tr_out, "%s.comps[%d]", target_id, attr_index);
 }
 
 void tr_pointlit (AstNode *pointlit) {

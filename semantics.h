@@ -33,8 +33,8 @@ void check_stat_vardecl (SymTab *tab, AstNode *decl);
 void check_stat_print (SymTab *tab, AstNode *print);
 
 void check_expr (SemInfo *info, SymTab *tab, AstNode *expr);
-void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
 void check_expr_id (SemInfo *info, SymTab *tab, AstNode *id);
+void check_expr_at (SemInfo *info, SymTab *tab, AstNode *at);
 
 void check_matrixlit (SemInfo *info, AstNode *matrixlit);
 void check_pointlit (SemInfo *info, SymTab *tab, AstNode *pointlit);
@@ -43,6 +43,7 @@ void check_intlit (SemInfo *info, AstNode *intlit);
 void check_expr_neg (SemInfo *info, SymTab *tab, AstNode *neg);
 
 void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add);
+void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
 void check_expr_mult (SemInfo *info, SymTab *tab, AstNode *mult);
 
 /*----------------------------------------------------------------------------*/
