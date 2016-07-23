@@ -343,22 +343,22 @@ AstNode* ast_create_unary (AstType op, AstNode *expr) {
   return node;
 }
 
-AstNode* ast_create_at (char *id, AstNode *target) {
-  AstNode *node, *nid;
+AstNode* ast_create_at (char *attr, AstNode *target) {
+  AstNode *node, *nattr;
 
-  IFNULL(id)
+  IFNULL(attr)
   IFNULL(target)
 
   node = ast_create_node(ast_AT); IFNULL(node)
 
-  nid = ast_create_id(id);
-  if (nid == NULL) {
+  nattr = ast_create_id(attr);
+  if (nattr == NULL) {
     free(node);
     return NULL;
   }
 
-  nid->sibling = target;
-  node->child = nid;
+  nattr->sibling = target;
+  node->child = nattr;
 
   return node;
 }

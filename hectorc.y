@@ -412,6 +412,24 @@ PrefixExpr
       }
     }
   }
+
+  | INTLIT AT PrefixExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      free($1);
+      ast_free($3);
+    } else {
+      $$ = ast = ast_create_at($1, $3);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        free($1);
+        ast_free($3);
+      } else {
+        ast_set_location($$, @2.first_line, @2.first_column);
+        ast_set_location($$->child, @1.first_line, @1.first_column);
+      }
+    }
+  }
   ;
 
 PrimaryExpr
