@@ -8,7 +8,15 @@
 
 #define BINARY_CONFLICT(L,C,O,LHS,RHS) printf(\
   "Line %d, column %d: Operator %s cannot be applied to types %s and %s\n",\
-  (L), (C), (O), (LHS), (RHS));
+  (L), (C), (O), sem_type_to_str(LHS), sem_type_to_str(RHS));
+
+#define CANT_ASSIGN(L,C,LHS,RHS) printf(\
+  "Line %d, column %d: Cannot assign %s to %s\n",\
+  (L), (C), sem_type_to_str(RHS), sem_type_to_str(LHS));
+
+#define LHS_NOT_LVALUE(L,C) printf(\
+  "Line %d, column %d: Left-hand expression is not an Lvalue\n",\
+  (L), (C));
 
 /*----------------------------------------------------------------------------*/
 
@@ -120,10 +128,7 @@ void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add) {
   if (result_type == sem_UNDEF) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
-    BINARY_CONFLICT(
-      add->line, add->column, "+",
-      sem_type_to_str(lhs_info.type), sem_type_to_str(rhs_info.type)
-    )
+    BINARY_CONFLICT(add->line, add->column, "+", lhs_info.type, rhs_info.type)
   } else {
     info->type = result_type;
     info->is_lvalue = FALSE;
@@ -152,24 +157,29 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
 
   // LHS
   lhs = ast_get_child_at(0, assign);
-  check_expr_id(&lhs_info, tab, lhs);
+  check_expr(&lhs_info, tab, lhs);
 
   // RHS
   rhs = ast_get_child_at(1, assign);
   check_expr(&rhs_info, tab, rhs);
 
-  result_type = can_assign(lhs_info.type, rhs_info.type);
+  // Checks if the RHS can be assigned to the LHS.
+  if (lhs_info.is_lvalue) {
+    result_type = can_assign(lhs_info.type, rhs_info.type);
+    if (result_type == sem_UNDEF) {
+      has_semantic_errors = 1;
+      info->type = sem_UNDEF;
+      CANT_ASSIGN(assign->line, assign->column, lhs_info.type, rhs_info.type)
+    } else {
+      info->type = result_type;
+      info->is_lvalue = TRUE;
+    }
 
-  if (result_type == sem_UNDEF) {
+  // The LHS is not an Lvalue.
+  } else {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
-    BINARY_CONFLICT(
-      assign->line, assign->column, "=",
-      sem_type_to_str(lhs_info.type), sem_type_to_str(rhs_info.type)
-    )
-  } else {
-    info->type = result_type;
-    info->is_lvalue = TRUE;
+    LHS_NOT_LVALUE(assign->line, assign->column)
   }
 
   assign->info = sem_create_info(info->type, info->is_lvalue);
@@ -206,10 +216,7 @@ void check_expr_mult (SemInfo *info, SymTab *tab, AstNode *mult) {
   if (result_type == sem_UNDEF) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
-    BINARY_CONFLICT(
-      mult->line, mult->column, "*",
-      sem_type_to_str(lhs_info.type), sem_type_to_str(rhs_info.type)
-    )
+    BINARY_CONFLICT(mult->line, mult->column, "*", lhs_info.type, rhs_info.type)
   } else {
     info->type = result_type;
     info->is_lvalue = FALSE;

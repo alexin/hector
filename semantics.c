@@ -23,6 +23,10 @@
   "Line %d, column %d: Operator @ cannot be applied to type %s\n",\
   (L), (C), sem_type_to_str(T));
 
+#define TARGET_NOT_LVALUE(L,C) printf(\
+  "Line %d, column %d: Target is not an Lvalue\n",\
+  (L), (C));
+
 #define NOT_ATTR(L,C,A,T) printf(\
   "Line %d, column %d: %s is not an attribute of %s\n",\
   (L), (C), (A), sem_type_to_str(T));
@@ -217,44 +221,44 @@ void check_expr_at (SemInfo *info, SymTab *tab, AstNode *at) {
 
   attr_id = (char*) ast_get_child_at(0, at)->value;
   target = ast_get_child_at(1, at);
-
-  if (target->type != ast_ID) {
-    has_semantic_errors = 1;
-    info->type = sem_UNDEF;
-    UNEXPECTED_NODE(target)
-  }
-
   target_id = (char*) target->value;
+
   check_expr(&target_info, tab, target);
 
-  switch (target_info.type) {
+  if (target_info.is_lvalue) {
+    switch (target_info.type) {
 
-    case sem_MATRIX:
-      if (is_matrix_attribute(attr_id)) {
-        info->type = sem_INT;
-        info->is_lvalue = FALSE;
-      } else {
+      case sem_MATRIX:
+        if (is_matrix_attribute(attr_id)) {
+          info->type = sem_INT;
+          info->is_lvalue = TRUE;
+        } else {
+          has_semantic_errors = 1;
+          info->type = sem_UNDEF;
+          NOT_ATTR(at->line, at->column, attr_id, target_info.type)
+        }
+        break;
+
+      case sem_POINT:
+        if (is_point_attribute(attr_id)) {
+          info->type = sem_INT;
+          info->is_lvalue = TRUE;
+        } else {
+          has_semantic_errors = 1;
+          info->type = sem_UNDEF;
+          NOT_ATTR(at->line, at->column, attr_id, target_info.type)
+        }
+        break;
+
+      default:
         has_semantic_errors = 1;
         info->type = sem_UNDEF;
-        NOT_ATTR(at->line, at->column, attr_id, target_info.type)
-      }
-      break;
-
-    case sem_POINT:
-      if (is_point_attribute(attr_id)) {
-        info->type = sem_INT;
-        info->is_lvalue = FALSE;
-      } else {
-        has_semantic_errors = 1;
-        info->type = sem_UNDEF;
-        NOT_ATTR(at->line, at->column, attr_id, target_info.type)
-      }
-      break;
-
-    default:
-      has_semantic_errors = 1;
-      info->type = sem_UNDEF;
-      INV_TARGET_TYPE(at->line, at->column, target_info.type)
+        INV_TARGET_TYPE(at->line, at->column, target_info.type)
+    }
+  } else {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    TARGET_NOT_LVALUE(at->line, at->column)
   }
 
   at->info = sem_create_info(info->type, info->is_lvalue);

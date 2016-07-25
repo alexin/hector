@@ -21,7 +21,7 @@ AstNode* ast_create_type (AstType type);
 AstNode* ast_create_print (AstNode *expr);
 
 AstNode* ast_create_id (char *id);
-AstNode* ast_create_assign (char *id, AstNode *expr);
+AstNode* ast_create_assign (AstNode *lhs, AstNode *rhs);
 AstNode* ast_create_unary (AstType op, AstNode *expr);
 AstNode* ast_create_binary (AstType op, AstNode *lhs, AstNode *rhs);
 AstNode* ast_create_at (char *id, AstNode *target);

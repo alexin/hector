@@ -284,7 +284,7 @@ AssignExpr
     }
   }
 
-  | ID EQUAL AssignExpr {
+  | UnaryExpr EQUAL AssignExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       free($1);

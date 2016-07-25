@@ -293,22 +293,16 @@ AstNode* ast_create_print (AstNode *expr) {
   return node;
 }
 
-AstNode* ast_create_assign (char *id, AstNode *expr) {
-  AstNode *node, *nid;
+AstNode* ast_create_assign (AstNode *lhs, AstNode *rhs) {
+  AstNode *node;
 
-  IFNULL(id)
-  IFNULL(expr)
+  IFNULL(lhs)
+  IFNULL(rhs)
 
   node = ast_create_node(ast_ASSIGN); IFNULL(node)
 
-  nid = ast_create_id(id);
-  if (nid == NULL) {
-    free(node);
-    return NULL;
-  }
-
-  nid->sibling = expr;
-  node->child = nid;
+  lhs->sibling = rhs;
+  node->child = lhs;
 
   return node;
 }

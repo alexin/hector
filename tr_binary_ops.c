@@ -83,8 +83,7 @@ void tr_expr_add (FILE *out, AstNode *add) {
 }
 
 void tr_expr_assign (FILE *out, AstNode *assign) {
-  char *lhs_id;
-  AstNode *rhs;
+  AstNode *lhs, *rhs;
 
   if (assign->type != ast_ASSIGN) {
     has_translation_errors = 1;
@@ -92,9 +91,11 @@ void tr_expr_assign (FILE *out, AstNode *assign) {
     return;
   }
 
-  lhs_id = (char*) assign->child->value;
-  fprintf(out, "%s = ", lhs_id);
-  rhs = assign->child->sibling;
+  lhs = ast_get_child_at(0, assign);
+  rhs = ast_get_child_at(1, assign);
+
+  tr_expr(out, lhs);
+  fprintf(out, " = ");
   tr_expr(out, rhs);
   //TODO Warning: self assign
 }
