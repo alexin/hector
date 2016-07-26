@@ -114,6 +114,7 @@ void tr_expr (FILE *out, AstNode *expr) {
        if (expr->type == ast_ADD) tr_expr_add(tr_out, expr);
   else if (expr->type == ast_ASSIGN) tr_expr_assign(tr_out, expr);
   else if (expr->type == ast_AT) tr_expr_at(expr);
+  else if (expr->type == ast_DOT) tr_expr_dot(tr_out, expr);
   else if (expr->type == ast_ID) tr_expr_id(expr);
   else if (expr->type == ast_INTLIT) tr_intlit(expr);
   else if (expr->type == ast_MATRIXLIT) tr_matrixlit(expr);

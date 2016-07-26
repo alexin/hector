@@ -51,3 +51,8 @@ mi32 mi32_mult_i32 (mi32 lhs, i32 rhs);
 vi32 mi32_mult_vi32 (mi32 lhs, vi32 rhs);
 vi32 vi32_mult_mi32 (vi32 lhs, mi32 rhs);
 mi32 mi32_mult_mi32 (mi32 lhs, mi32 rhs);
+
+/*----------------------------------------------------------------------------*/
+
+vi32 vi32_cross_vi32 (vi32 lhs, vi32 rhs);
+int vi32_dot_vi32 (vi32 lhs, vi32 rhs);

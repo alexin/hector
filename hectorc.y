@@ -58,6 +58,7 @@ static AstNode *ast;
 %right EQUAL
 %left PLUS MINUS
 %left AST
+%left DOT
 %right AT
 %left OBRACKET CBRACKET OPAR CPAR
 
@@ -365,6 +366,23 @@ MultExpr
       ast_free($3);
     } else {
       $$ = ast = ast_create_binary(ast_MULT, $1, $3);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        ast_free($1);
+        ast_free($3);
+      } else {
+        ast_set_location($$, @2.first_line, @2.first_column);
+      }
+    }
+  }
+
+  | MultExpr DOT UnaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+      ast_free($3);
+    } else {
+      $$ = ast = ast_create_binary(ast_DOT, $1, $3);
       if($$ == NULL) {
         has_syntax_errors = 1;
         ast_free($1);

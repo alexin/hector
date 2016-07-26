@@ -20,6 +20,28 @@ vector + matrix  = undef
 vector + point   = point
 vector + vector  = vector
 
+/*-- DOT ---------------------------------------------------------------------*/
+
+int . int     = undef
+int . matrix  = undef
+int . point   = undef
+int . vector  = undef
+
+matrix . int     = undef
+matrix . matrix  = undef
+matrix . point   = undef
+matrix . vector  = undef
+
+point . int     = undef
+point . matrix  = undef
+point . point   = int
+point . vector  = int
+
+vector . int     = undef
+vector . matrix  = undef
+vector . point   = int
+vector . vector  = int
+
 /*-- MULT --------------------------------------------------------------------*/
 
 int * int     = int

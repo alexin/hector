@@ -23,6 +23,7 @@ SemInfo* sem_create_info (SemType type, int lvalue);
 SemType can_negate (SemType type);
 
 SemType can_add (SemType lhs, SemType rhs);
+SemType can_dot (SemType lhs, SemType rhs);
 SemType can_assign (SemType lhs, SemType rhs);
 SemType can_mult (SemType lhs, SemType rhs);
 
@@ -43,6 +44,7 @@ void check_intlit (SemInfo *info, AstNode *intlit);
 void check_expr_neg (SemInfo *info, SymTab *tab, AstNode *neg);
 
 void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add);
+void check_expr_dot (SemInfo *info, SymTab *tab, AstNode *dot);
 void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
 void check_expr_mult (SemInfo *info, SymTab *tab, AstNode *mult);
 void check_expr_sub (SemInfo *info, SymTab *tab, AstNode *sub);

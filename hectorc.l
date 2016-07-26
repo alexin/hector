@@ -57,6 +57,7 @@ floatlit                  [0-9]*\.?[0-9]+
 "+"                       { IC; dbg_printf("PLUS\n"); return PLUS; }
 "-"                       { IC; dbg_printf("MINUS\n"); return MINUS; }
 "*"                       { IC; dbg_printf("AST\n"); return AST; }
+"."                       { IC; dbg_printf("DOT\n"); return DOT; }
 "@"                       { IC; dbg_printf("AT\n"); return AT; }
 
 "int"                     { IC; dbg_printf("INT\n"); return INT; }

@@ -100,6 +100,65 @@ void tr_expr_assign (FILE *out, AstNode *assign) {
   //TODO Warning: self assign
 }
 
+void tr_expr_dot (FILE *out, AstNode *dot) {
+  AstNode *lhs, *rhs;
+
+  if (dot->type != ast_DOT) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(dot)
+    return;
+  }
+
+  lhs = ast_get_child_at(0, dot);
+  rhs = ast_get_child_at(1, dot);
+
+  // point . point
+  if (lhs->info->type == sem_POINT && rhs->info->type == sem_POINT) {
+    fprintf(out, "vi32_dot_vi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  // point . vector
+  } else if (lhs->info->type == sem_POINT && rhs->info->type == sem_VECTOR) {
+    fprintf(out, "vi32_dot_vi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  // vector . point
+  } else if (lhs->info->type == sem_VECTOR && rhs->info->type == sem_POINT) {
+    fprintf(out, "vi32_dot_vi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  // vector . vector
+  } else if (lhs->info->type == sem_VECTOR && rhs->info->type == sem_VECTOR) {
+    fprintf(out, "vi32_dot_vi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  } else {
+    has_translation_errors = 1;
+    UNEXPECTED_OPERANDS(lhs->info, rhs->info)
+    return;
+  }
+}
+
 void tr_expr_mult (FILE *out, AstNode *mult) {
   AstNode *lhs, *rhs;
 

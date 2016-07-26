@@ -162,6 +162,7 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
        if (expr->type == ast_ADD) check_expr_add(info, tab, expr);
   else if (expr->type == ast_ASSIGN) check_expr_assign(info, tab, expr);
   else if (expr->type == ast_AT) check_expr_at(info, tab, expr);
+  else if (expr->type == ast_DOT) check_expr_dot(info, tab, expr);
   else if (expr->type == ast_ID) check_expr_id(info, tab, expr);
   else if (expr->type == ast_INTLIT) check_intlit(info, expr);
   else if (expr->type == ast_MATRIXLIT) check_matrixlit(info, expr);

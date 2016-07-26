@@ -219,3 +219,20 @@ mi32 mi32_mult_mi32 (mi32 lhs, mi32 rhs) {
   S44(&m, G41(&lhs)*G14(&rhs) + G42(&lhs)*G24(&rhs) + G43(&lhs)*G34(&rhs) + G44(&lhs)*G44(&rhs))
   return m;
 }
+
+/*----------------------------------------------------------------------------*/
+
+vi32 vi32_cross_vi32 (vi32 lhs, vi32 rhs) {
+  vi32 v;
+  SX(&v, GY(&lhs)*GZ(&rhs) - GZ(&lhs)*GY(&rhs))
+  SX(&v, GZ(&lhs)*GX(&rhs) - GX(&lhs)*GZ(&rhs))
+  SX(&v, GX(&lhs)*GY(&rhs) - GY(&lhs)*GX(&rhs))
+  SW(&v, 1)
+  return v;
+}
+
+int vi32_dot_vi32 (vi32 lhs, vi32 rhs) {
+  int i, s;
+  for (i=0, s=0; i < 3; i++) s += lhs.comps[i] * rhs.comps[i];
+  return s;
+}
