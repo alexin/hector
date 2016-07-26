@@ -32,7 +32,7 @@ SemType can_add (SemType lhs, SemType rhs) {
       return sem_UNDEF;
 
     case sem_POINT:
-      if (rhs == sem_POINT) return sem_POINT;
+      if (rhs == sem_POINT) return sem_VECTOR;
       if (rhs == sem_VECTOR) return sem_POINT;
       return sem_UNDEF;
 
@@ -113,14 +113,14 @@ SemType can_sub (SemType lhs, SemType rhs) {
       return sem_UNDEF;
 
     case sem_POINT:
-      if (rhs == sem_POINT) return sem_POINT;
+      if (rhs == sem_POINT) return sem_VECTOR;
       if (rhs == sem_VECTOR) return sem_POINT;
       return sem_UNDEF;
 
     case sem_UNDEF: return sem_UNDEF;
 
     case sem_VECTOR:
-      if (rhs == sem_POINT) return sem_POINT;
+      if (rhs == sem_POINT) return sem_VECTOR;
       if (rhs == sem_VECTOR) return sem_VECTOR;
       return sem_UNDEF;
   }

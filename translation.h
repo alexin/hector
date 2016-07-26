@@ -14,6 +14,7 @@ void tr_expr_neg (FILE *out, AstNode *neg);
 void tr_expr_add (FILE *out, AstNode *add);
 void tr_expr_assign (FILE *out, AstNode *assign);
 void tr_expr_mult (FILE *out, AstNode *mult);
+void tr_expr_sub (FILE *out, AstNode *sub);
 
 
 #endif//H_TRANSLATION

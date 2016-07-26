@@ -122,6 +122,10 @@ void ast_print (AstNode *node, unsigned int depth) {
       tprintf(depth, "Program");
       ast_print_annotations(node);
       break;
+    case ast_SUB:
+      tprintf(depth, "Sub");
+      ast_print_annotations(node);
+      break;
     case ast_VARDECL:
       tprintf(depth, "VarDecl");
       ast_print_annotations(node);

@@ -41,6 +41,9 @@ vi32 vi32_neg (vi32 v);
 vi32 vi32_add_vi32 (vi32 lhs, vi32 rhs);
 mi32 mi32_add_mi32 (mi32 lhs, mi32 rhs);
 
+vi32 vi32_sub_vi32 (vi32 lhs, vi32 rhs);
+mi32 mi32_sub_mi32 (mi32 lhs, mi32 rhs);
+
 /*----------------------------------------------------------------------------*/
 
 vi32 vi32_mult_i32 (vi32 lhs, i32 rhs);

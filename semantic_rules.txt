@@ -12,7 +12,7 @@ matrix + vector  = undef
 
 point + int     = undef
 point + matrix  = undef
-point + point   = point
+point + point   = vector
 point + vector  = point
 
 vector + int     = undef
@@ -63,10 +63,10 @@ matrix - vector  = undef
 
 point - int     = undef
 point - matrix  = undef
-point - point   = point
+point - point   = vector
 point - vector  = point
 
 vector - int     = undef
 vector - matrix  = undef
-vector - point   = point
+vector - point   = vector
 vector - vector  = vector

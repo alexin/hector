@@ -225,3 +225,80 @@ void tr_expr_mult (FILE *out, AstNode *mult) {
     return;
   }
 }
+
+void tr_expr_sub (FILE *out, AstNode *sub) {
+  AstNode *lhs, *rhs;
+
+  if (sub->type != ast_SUB) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(sub)
+    return;
+  }
+
+  lhs = ast_get_child_at(0, sub);
+  rhs = ast_get_child_at(1, sub);
+
+  // int - int
+  if (lhs->info->type == sem_INT && rhs->info->type == sem_INT) {
+    fprintf(out, "");
+    tr_expr(out, lhs);
+    fprintf(out, " - ");
+    tr_expr(out, rhs);
+    fprintf(out, "");
+
+  // matrix - matrix
+  } else if (lhs->info->type == sem_MATRIX && rhs->info->type == sem_MATRIX) {
+    fprintf(out, "mi32_sub_mi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  // point - point
+  } else if (lhs->info->type == sem_POINT && rhs->info->type == sem_POINT) {
+    fprintf(out, "vi32_sub_vi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  // point - vector
+  } else if (lhs->info->type == sem_POINT && rhs->info->type == sem_VECTOR) {
+    fprintf(out, "vi32_sub_vi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  // vector - point
+  } else if (lhs->info->type == sem_VECTOR && rhs->info->type == sem_POINT) {
+    fprintf(out, "vi32_sub_vi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  // vector - vector
+  } else if (lhs->info->type == sem_VECTOR && rhs->info->type == sem_VECTOR) {
+    fprintf(out, "vi32_sub_vi32");
+    fprintf(out, "((");
+    tr_expr(out, lhs);
+    fprintf(out, "), ");
+    fprintf(out, "(");
+    tr_expr(out, rhs);
+    fprintf(out, "))");
+
+  } else {
+    has_translation_errors = 1;
+    UNEXPECTED_OPERANDS(lhs->info, rhs->info)
+    return;
+  }
+}

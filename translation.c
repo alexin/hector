@@ -120,6 +120,7 @@ void tr_expr (FILE *out, AstNode *expr) {
   else if (expr->type == ast_MULT) tr_expr_mult(tr_out, expr);
   else if (expr->type == ast_NEG) tr_expr_neg(tr_out, expr);
   else if (expr->type == ast_POINTLIT) tr_pointlit(expr);
+  else if (expr->type == ast_SUB) tr_expr_sub(tr_out, expr);
   else {
     has_translation_errors = 1;
     UNEXPECTED_NODE(expr)

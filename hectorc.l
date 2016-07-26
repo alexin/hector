@@ -46,6 +46,7 @@ floatlit                  [0-9]*\.?[0-9]+
  /* Matches an integer literal and optionally prints it. */
 {intlit}                  { IC; on_intlit(); return INTLIT; }
 
+","                       { IC; dbg_printf("COMMA\n"); return COMMA; }
 ";"                       { IC; dbg_printf("SEMI\n"); return SEMI; }
 "["                       { IC; dbg_printf("OBRACKET\n"); return OBRACKET; }
 "]"                       { IC; dbg_printf("CBRACKET\n"); return CBRACKET; }

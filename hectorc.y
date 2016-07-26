@@ -52,8 +52,8 @@ static AstNode *ast;
 %token MATRIX
 %token VECTOR
 
+%token COMMA SEMI
 %token PRINT
-%token SEMI
 
 %right EQUAL
 %left PLUS MINUS
@@ -238,17 +238,17 @@ StatList
   ;
 
 ExprList
-  : Expr ExprList {
+  : ExprList COMMA Expr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
-      ast_free($2);
+      ast_free($3);
     } else {
-      $$ = ast = ast_add_sibling($1, $2);
+      $$ = ast = ast_add_sibling($1, $3);
       if($$ == NULL) {
         has_syntax_errors = 1;
         ast_free($1);
-        ast_free($2);
+        ast_free($3);
       }
     }
   }

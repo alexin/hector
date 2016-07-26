@@ -147,6 +147,19 @@ mi32 mi32_add_mi32 (mi32 lhs, mi32 rhs) {
   return m;
 }
 
+vi32 vi32_sub_vi32 (vi32 lhs, vi32 rhs) {
+  int i; vi32 v;
+  for (i=0; i < 3; i++) v.comps[i] = lhs.comps[i] - rhs.comps[i];
+  SW(&v, 1);
+  return v;
+}
+
+mi32 mi32_sub_mi32 (mi32 lhs, mi32 rhs) {
+  int i; mi32 m;
+  for (i=0; i < 16; i++) m.comps[i] = lhs.comps[i] - rhs.comps[i];
+  return m;
+}
+
 /*----------------------------------------------------------------------------*/
 
 vi32 vi32_mult_i32 (vi32 lhs, i32 rhs) {
