@@ -38,6 +38,7 @@ static AstNode *ast;
 %type <v_node> AssignExpr
 %type <v_node> AddExpr
 %type <v_node> MultExpr
+%type <v_node> AlgExpr
 %type <v_node> UnaryExpr
 %type <v_node> PrefixExpr
 %type <v_node> PrimaryExpr
@@ -58,7 +59,7 @@ static AstNode *ast;
 %right EQUAL
 %left PLUS MINUS
 %left AST
-%left DOT
+%left DOT CROSS
 %right AT
 %left OBRACKET CBRACKET OPAR CPAR
 
@@ -350,7 +351,7 @@ AddExpr
   ;
 
 MultExpr
-  : UnaryExpr {
+  : AlgExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
@@ -359,7 +360,7 @@ MultExpr
     }
   }
 
-  | MultExpr AST UnaryExpr {
+  | MultExpr AST AlgExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);
@@ -375,8 +376,36 @@ MultExpr
       }
     }
   }
+  ;
 
-  | MultExpr DOT UnaryExpr {
+AlgExpr
+  : UnaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+    } else {
+      $$ = ast = $1;
+    }
+  }
+
+  | AlgExpr CROSS UnaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($1);
+      ast_free($3);
+    } else {
+      $$ = ast = ast_create_binary(ast_CROSS, $1, $3);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        ast_free($1);
+        ast_free($3);
+      } else {
+        ast_set_location($$, @2.first_line, @2.first_column);
+      }
+    }
+  }
+
+  | AlgExpr DOT UnaryExpr {
     if (has_syntax_errors) {
       $$ = NULL;
       ast_free($1);

@@ -1,3 +1,4 @@
-point p = [1, 1, 1];
-vector v = [1, 1, 1];
+point p = [2, 3, 4];
+vector v = [5, 6, 7];
 print p.v;
+print p:-v;

@@ -225,8 +225,8 @@ mi32 mi32_mult_mi32 (mi32 lhs, mi32 rhs) {
 vi32 vi32_cross_vi32 (vi32 lhs, vi32 rhs) {
   vi32 v;
   SX(&v, GY(&lhs)*GZ(&rhs) - GZ(&lhs)*GY(&rhs))
-  SX(&v, GZ(&lhs)*GX(&rhs) - GX(&lhs)*GZ(&rhs))
-  SX(&v, GX(&lhs)*GY(&rhs) - GY(&lhs)*GX(&rhs))
+  SY(&v, GZ(&lhs)*GX(&rhs) - GX(&lhs)*GZ(&rhs))
+  SZ(&v, GX(&lhs)*GY(&rhs) - GY(&lhs)*GX(&rhs))
   SW(&v, 1)
   return v;
 }

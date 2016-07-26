@@ -45,6 +45,29 @@ SemType can_add (SemType lhs, SemType rhs) {
   }
 }
 
+SemType can_cross (SemType lhs, SemType rhs) {
+  switch (lhs) {
+
+    case sem_INT:
+      return sem_UNDEF;
+
+    case sem_MATRIX:
+      return sem_UNDEF;
+
+    case sem_POINT:
+      if (rhs == sem_POINT) return sem_VECTOR;
+      if (rhs == sem_VECTOR) return sem_VECTOR;
+      return sem_UNDEF;
+
+    case sem_UNDEF: return sem_UNDEF;
+
+    case sem_VECTOR:
+      if (rhs == sem_POINT) return sem_VECTOR;
+      if (rhs == sem_VECTOR) return sem_VECTOR;
+      return sem_UNDEF;
+  }
+}
+
 SemType can_dot (SemType lhs, SemType rhs) {
   switch (lhs) {
 
@@ -232,6 +255,46 @@ void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign) {
 
   assign->info = sem_create_info(info->type, info->is_lvalue);
   if (assign->info == NULL) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    FAILED_MALLOC
+    return;
+  }
+}
+
+void check_expr_cross (SemInfo *info, SymTab *tab, AstNode *cross) {
+  AstNode *lhs, *rhs;
+  SemInfo lhs_info, rhs_info;
+  SemType result_type;
+
+  if (cross->type != ast_CROSS) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    UNEXPECTED_NODE(cross)
+    return;
+  }
+
+  // LHS
+  lhs = ast_get_child_at(0, cross);
+  check_expr(&lhs_info, tab, lhs);
+
+  // RHS
+  rhs = ast_get_child_at(1, cross);
+  check_expr(&rhs_info, tab, rhs);
+
+  result_type = can_cross(lhs_info.type, rhs_info.type);
+
+  if (result_type == sem_UNDEF) {
+    has_semantic_errors = 1;
+    info->type = sem_UNDEF;
+    BINARY_CONFLICT(cross->line, cross->column, ":", lhs_info.type, rhs_info.type)
+  } else {
+    info->type = result_type;
+    info->is_lvalue = FALSE;
+  }
+
+  cross->info = sem_create_info(info->type, info->is_lvalue);
+  if (cross->info == NULL) {
     has_semantic_errors = 1;
     info->type = sem_UNDEF;
     FAILED_MALLOC
