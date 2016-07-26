@@ -45,6 +45,7 @@ void check_expr_neg (SemInfo *info, SymTab *tab, AstNode *neg);
 void check_expr_add (SemInfo *info, SymTab *tab, AstNode *add);
 void check_expr_assign (SemInfo *info, SymTab *tab, AstNode *assign);
 void check_expr_mult (SemInfo *info, SymTab *tab, AstNode *mult);
+void check_expr_sub (SemInfo *info, SymTab *tab, AstNode *sub);
 
 /*----------------------------------------------------------------------------*/
 

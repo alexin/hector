@@ -1,14 +1,7 @@
-/*-- NEG ---------------------------------------------------------------------*/
-
-int     = int
-matrix  = undef
-point   = point
-vector  = vector
-
 /*-- ADD ---------------------------------------------------------------------*/
 
 int + int     = int
-int + matrix  = undex
+int + matrix  = undef
 int + point   = undef
 int + vector  = undef
 
@@ -48,3 +41,32 @@ vector * int     = vector
 vector * matrix  = vector
 vector * point   = undef
 vector * vector  = undef
+
+/*-- NEG ---------------------------------------------------------------------*/
+
+int     = int
+matrix  = undef
+point   = point
+vector  = vector
+
+/*-- SUB ---------------------------------------------------------------------*/
+
+int - int     = int
+int - matrix  = undef
+int - point   = undef
+int - vector  = undef
+
+matrix - int     = undef
+matrix - matrix  = matrix
+matrix - point   = undef
+matrix - vector  = undef
+
+point - int     = undef
+point - matrix  = undef
+point - point   = point
+point - vector  = point
+
+vector - int     = undef
+vector - matrix  = undef
+vector - point   = point
+vector - vector  = vector

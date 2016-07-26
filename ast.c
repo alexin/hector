@@ -15,7 +15,7 @@
 
 static const char *ast_type_str[] = {
   "ADD", "ASSIGN", "AT", "ID", "INT", "INTLIT", "MATRIX", "MATRIXLIT", "MULT",
-  "NEG", "POINT", "POINTLIT", "PRINT", "PROGRAM", "VARDECL", "VECTOR"
+  "NEG", "POINT", "POINTLIT", "PRINT", "PROGRAM", "SUB", "VARDECL", "VECTOR"
 };
 
 const char* ast_type_to_str (AstType type) {
@@ -312,7 +312,8 @@ AstNode* ast_create_binary (AstType op, AstNode *lhs, AstNode *rhs) {
 
   if (
     op != ast_ADD &&
-    op != ast_MULT
+    op != ast_MULT &&
+    op != ast_SUB
   ) return NULL;
 
   IFNULL(lhs)
