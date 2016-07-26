@@ -49,6 +49,8 @@ floatlit                  [0-9]*\.?[0-9]+
 ";"                       { IC; dbg_printf("SEMI\n"); return SEMI; }
 "["                       { IC; dbg_printf("OBRACKET\n"); return OBRACKET; }
 "]"                       { IC; dbg_printf("CBRACKET\n"); return CBRACKET; }
+"("                       { IC; dbg_printf("OPAR\n"); return OPAR; }
+")"                       { IC; dbg_printf("CPAR\n"); return CPAR; }
 
 "="                       { IC; dbg_printf("EQUAL\n"); return EQUAL; }
 "+"                       { IC; dbg_printf("PLUS\n"); return PLUS; }

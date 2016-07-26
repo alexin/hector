@@ -59,7 +59,7 @@ static AstNode *ast;
 %left PLUS MINUS
 %left AST
 %right AT
-%left OBRACKET CBRACKET
+%left OBRACKET CBRACKET OPAR CPAR
 
 %start Program
 
@@ -450,7 +450,16 @@ PrefixExpr
   ;
 
 PrimaryExpr
-  : ID {
+  : OPAR Expr CPAR {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($2);
+    } else {
+      $$ = ast = $2;
+    }
+  }
+
+  | ID {
     if (has_syntax_errors) {
       $$ = NULL;
       free($1);
