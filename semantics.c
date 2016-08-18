@@ -171,6 +171,7 @@ void check_expr (SemInfo *info, SymTab *tab, AstNode *expr) {
   else if (expr->type == ast_NEG) check_expr_neg(info, tab, expr);
   else if (expr->type == ast_POINTLIT) check_pointlit(info, tab, expr);
   else if (expr->type == ast_SUB) check_expr_sub(info, tab, expr);
+  else if (expr->type == ast_TRANSPOSE) check_expr_transpose(info, tab, expr);
   else {
     info->type = sem_UNDEF;
     UNEXPECTED_NODE(expr)

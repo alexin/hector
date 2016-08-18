@@ -16,7 +16,7 @@
 static const char *ast_type_str[] = {
   "ADD", "ASSIGN", "AT", "CROSS", "DOT", "ID", "INT", "INTLIT", "MATRIX",
   "MATRIXLIT", "MULT", "NEG", "POINT", "POINTLIT", "PRINT", "PROGRAM", "SUB",
-  "VARDECL", "VECTOR"
+  "TRANSPOSE", "VARDECL", "VECTOR"
 };
 
 const char* ast_type_to_str (AstType type) {
@@ -133,6 +133,10 @@ void ast_print (AstNode *node, unsigned int depth) {
       break;
     case ast_SUB:
       tprintf(depth, "Sub");
+      ast_print_annotations(node);
+      break;
+    case ast_TRANSPOSE:
+      tprintf(depth, "Transpose");
       ast_print_annotations(node);
       break;
     case ast_VARDECL:
@@ -345,7 +349,8 @@ AstNode* ast_create_binary (AstType op, AstNode *lhs, AstNode *rhs) {
 AstNode* ast_create_unary (AstType op, AstNode *expr) {
   AstNode *node;
   if (
-    op != ast_NEG
+    op != ast_NEG &&
+    op != ast_TRANSPOSE
   ) return NULL;
   IFNULL(expr)
   node = ast_create_node(op); IFNULL(node)

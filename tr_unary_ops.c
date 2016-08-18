@@ -38,3 +38,26 @@ void tr_expr_neg (FILE *out, AstNode *neg) {
     return;
   }
 }
+
+void tr_expr_transpose (FILE *out, AstNode *trp) {
+  AstNode *expr;
+
+  if (trp->type != ast_TRANSPOSE) {
+    has_translation_errors = 1;
+    UNEXPECTED_NODE(trp)
+    return;
+  }
+
+  expr = ast_get_child_at(0, trp);
+
+  if (expr->info->type == sem_MATRIX) {
+    fprintf(out, "mi32_transpose(");
+    tr_expr(out, expr);
+    fprintf(out, ")");
+
+  } else {
+    has_translation_errors = 1;
+    UNEXPECTED_OPERAND(expr->info)
+    return;
+  }
+}

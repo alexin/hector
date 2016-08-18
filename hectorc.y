@@ -59,7 +59,7 @@ static AstNode *ast;
 %right EQUAL
 %left PLUS MINUS
 %left AST
-%left DOT CROSS
+%left DOT CROSS SQUOTE
 %right AT
 %left OBRACKET CBRACKET OPAR CPAR
 
@@ -439,6 +439,21 @@ UnaryExpr
       ast_free($2);
     } else {
       $$ = ast = ast_create_unary(ast_NEG, $2);
+      if($$ == NULL) {
+        has_syntax_errors = 1;
+        ast_free($2);
+      } else {
+        ast_set_location($$, @1.first_line, @1.first_column);
+      }
+    }
+  }
+
+  | SQUOTE UnaryExpr {
+    if (has_syntax_errors) {
+      $$ = NULL;
+      ast_free($2);
+    } else {
+      $$ = ast = ast_create_unary(ast_TRANSPOSE, $2);
       if($$ == NULL) {
         has_syntax_errors = 1;
         ast_free($2);

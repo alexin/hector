@@ -236,3 +236,12 @@ int vi32_dot_vi32 (vi32 lhs, vi32 rhs) {
   for (i=0, s=0; i < 3; i++) s += lhs.comps[i] * rhs.comps[i];
   return s;
 }
+
+mi32 mi32_transpose (mi32 m) {
+  mi32 m2;
+  S11(&m2, G11(&m)) S12(&m2, G21(&m)) S13(&m2, G31(&m)) S14(&m2, G41(&m))
+  S21(&m2, G12(&m)) S22(&m2, G22(&m)) S23(&m2, G32(&m)) S24(&m2, G42(&m))
+  S31(&m2, G13(&m)) S32(&m2, G23(&m)) S33(&m2, G33(&m)) S34(&m2, G43(&m))
+  S41(&m2, G14(&m)) S42(&m2, G24(&m)) S43(&m2, G34(&m)) S44(&m2, G44(&m))
+  return m2;
+}
