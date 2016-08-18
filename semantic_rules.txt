@@ -114,3 +114,10 @@ vector - int     = undef
 vector - matrix  = undef
 vector - point   = vector
 vector - vector  = vector
+
+/*-- TRANPOSE ----------------------------------------------------------------*/
+
+'int     = undef
+'matrix  = matrix
+'point   = undef
+'vector  = undef
