@@ -10,4 +10,4 @@ Hectorc is a compiler that was created for **experimenting and training purposes
 3. Run `./valgrind` to execute the program.
 
 #Disclaimer
-I do not intend to make this README more comprehensive for the time being. If you are reading this, then I suppose you are able to figure out most of this stuff on your own. If not, then feel free to contact me.
+Despite being a public repository, I do not intend to make this README more comprehensive for the time being. If you are reading this, then I suppose you are able to figure out most of this stuff on your own. If not, then feel free to contact me.
